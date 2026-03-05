@@ -1,0 +1,17 @@
+{
+  "name": "openclaw-trading-scout",
+  "version": "1.0.0",
+  "description": "OpenClaw Trading Scout - Binance arbitrage monitoring agent",
+  "main": "scout.js",
+  "scripts": {
+    "start": "node scout.js",
+    "test": "node test.js"
+  },
+  "keywords": ["openclaw", "binance", "trading", "arbitrage", "agent"],
+  "author": "发财猫",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.0",
+    "node-telegram-bot-api": "^0.64.0"
+  }
+}

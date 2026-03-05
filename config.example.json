@@ -1,0 +1,21 @@
+{
+  "binance": {
+    "apiKey": "",
+    "apiSecret": "",
+    "testnet": false
+  },
+  "telegram": {
+    "botToken": "",
+    "chatId": ""
+  },
+  "trading": {
+    "pairs": ["BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT"],
+    "threshold": 0.5,
+    "checkInterval": 5000,
+    "minVolume": 1000000
+  },
+  "logging": {
+    "enabled": true,
+    "file": "scout.log"
+  }
+}
