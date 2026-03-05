@@ -256,13 +256,14 @@ MIT License - 开源免费使用
 
 ## 👤 作者
 
-**发财猫** 🐱
+**Brart**
 - Telegram: [@Ee_7t](https://t.me/Ee_7t)
 
 ## 🙏 鸣谢
 
 - OpenClaw 团队提供强大的 AI Agent 框架
 - 币安提供优质的交易 API
+- NOFX 提供强大的数据
 - 社区提供灵感和反馈
 
 ---
