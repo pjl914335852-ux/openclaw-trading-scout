@@ -119,10 +119,14 @@ class TelegramUI {
 • 📈 追踪历史机会
 • 🤖 AI 智能推荐
 
+*💓 心跳功能：*
+
+每 2 小时自动发送运行状态报告，让你知道我一直在工作！
+
 *📋 可用命令：*
 
 /status - 查看运行状态
-/pairs - 查看监控的交易对
+/pairs - 管理交易对
 /history - 查看历史机会
 /lang - 切换语言
 /help - 帮助信息
@@ -147,10 +151,14 @@ I'm your 24/7 cryptocurrency arbitrage monitoring assistant. I monitor Binance t
 • 📈 Track historical opportunities
 • 🤖 AI-powered recommendations
 
+*💓 Heartbeat Feature:*
+
+Sends status report every 2 hours to let you know I'm working!
+
 *📋 Available Commands:*
 
 /status - View running status
-/pairs - View monitored pairs
+/pairs - Manage trading pairs
 /history - View historical opportunities
 /lang - Switch language
 /help - Help information
@@ -348,6 +356,9 @@ ${aiPairs.map(p => `• ${p}`).join('\n')}
         [
           { text: this.lang === 'zh' ? '📊 运行状态' : '📊 Status', callback_data: 'status' },
           { text: this.lang === 'zh' ? '📝 历史记录' : '📝 History', callback_data: 'history' }
+        ],
+        [
+          { text: this.lang === 'zh' ? '🏠 返回主菜单' : '🏠 Back to Menu', callback_data: 'start' }
         ]
       ]
     };
@@ -442,6 +453,21 @@ ${index + 1}. *${opp.pair1} / ${opp.pair2}*
 
 我们是一个专注于加密货币套利监控的智能助手，由 NOFX 社区精准数据支持。我们的目标是帮助交易者发现市场中的套利机会，提供实时监控和智能分析。
 
+*🔧 工作原理:*
+
+1. *实时监控*: 每 30 秒获取币安价格数据
+2. *价差计算*: 对比不同交易对的价格变化
+3. *套利检测*: 当价差超过 0.5% 时触发通知
+4. *NOFX 增强*: 使用 NOFX 数据评估信号质量
+5. *风险评估*: 根据交易量和波动性评估风险
+6. *即时推送*: 发现机会立即发送 Telegram 通知
+
+*💓 心跳功能:*
+
+• 每 2 小时自动发送运行状态报告
+• 显示运行时间、检查次数、发现机会数
+• 让你知道机器人一直在工作
+
 *📋 可用命令:*
 
 /start - 开始使用
@@ -486,6 +512,21 @@ GitHub: github.com/pjl914335852-ux/openclaw-trading-scout
 *🦞 About OpenClaw Trading Scout*
 
 We are an intelligent assistant focused on cryptocurrency arbitrage monitoring, powered by NOFX community precision data. Our goal is to help traders discover arbitrage opportunities in the market with real-time monitoring and intelligent analysis.
+
+*🔧 How It Works:*
+
+1. *Real-time Monitoring*: Fetches Binance prices every 30s
+2. *Spread Calculation*: Compares price changes across pairs
+3. *Arbitrage Detection*: Triggers when spread exceeds 0.5%
+4. *NOFX Enhancement*: Uses NOFX data to assess signal quality
+5. *Risk Assessment*: Evaluates risk based on volume & volatility
+6. *Instant Push*: Sends Telegram notification immediately
+
+*💓 Heartbeat Feature:*
+
+• Sends status report every 2 hours automatically
+• Shows uptime, checks count, opportunities found
+• Lets you know the bot is always working
 
 *📋 Available Commands:*
 
@@ -690,7 +731,7 @@ Send /cancel to cancel
 当前自定义交易对：
 ${customPairs.map((p, i) => `${i + 1}. ${p}`).join('\n')}
 
-请发送要删除的交易对名称或编号
+请发送要删除的交易对编号
 
 发送 /cancel 取消操作
     ` : `
@@ -699,7 +740,7 @@ ${customPairs.map((p, i) => `${i + 1}. ${p}`).join('\n')}
 Current custom pairs:
 ${customPairs.map((p, i) => `${i + 1}. ${p}`).join('\n')}
 
-Please send the pair name or number to remove
+Please send the number to remove
 
 Send /cancel to cancel
     `;
@@ -873,22 +914,14 @@ Send /cancel to cancel
       const customPairs = this.config.trading.customPairs || [];
       let pairToRemove = null;
       
-      // Check if it's a number (index)
+      // Only accept number (index)
       const index = parseInt(text);
       if (!isNaN(index) && index > 0 && index <= customPairs.length) {
         pairToRemove = customPairs[index - 1];
       } else {
-        // Check if it's a pair name
-        const pair = text.toUpperCase();
-        if (customPairs.includes(pair)) {
-          pairToRemove = pair;
-        }
-      }
-      
-      if (!pairToRemove) {
         this.bot.sendMessage(chatId, this.lang === 'zh' ? 
-          '❌ 未找到该交易对' :
-          '❌ Pair not found'
+          '❌ 请输入有效的编号（1-' + customPairs.length + '）' :
+          '❌ Please enter a valid number (1-' + customPairs.length + ')'
         );
         return;
       }
