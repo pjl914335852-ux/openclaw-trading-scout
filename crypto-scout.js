@@ -92,9 +92,11 @@ const state = {
   lastPriceUpdate: 0,
   lastVolumeUpdate: 0,
   lastNOFXUpdate: 0,
+  lastHeartbeat: 0,
   requestCount: 0,
   requestResetTime: Date.now(),
-  startTime: Date.now()
+  startTime: Date.now(),
+  checksCount: 0
 };
 
 const MAX_HISTORY = 1000;
@@ -548,6 +550,38 @@ async function mainLoop() {
       `🎯 NOFX更新: ${Math.floor((Date.now() - state.lastNOFXUpdate) / 1000)}秒前` :
       `🎯 NOFX update: ${Math.floor((Date.now() - state.lastNOFXUpdate) / 1000)}s ago`);
     console.log('─'.repeat(50) + '\n');
+    
+    // Heartbeat: send status update every 2 hours (if autoPush enabled)
+    state.checksCount++;
+    const HEARTBEAT_INTERVAL = 2 * 60 * 60 * 1000; // 2 hours
+    const now = Date.now();
+    
+    if (config.trading.autoPush && (now - state.lastHeartbeat) > HEARTBEAT_INTERVAL) {
+      const uptime = Math.floor((now - state.startTime) / 1000 / 60); // minutes
+      const hours = Math.floor(uptime / 60);
+      const minutes = uptime % 60;
+      
+      const heartbeatMsg = lang === 'zh' ? `
+💓 *侦察员心跳报告*
+
+✅ 运行正常 | ⏱️ ${hours}小时${minutes}分钟
+📊 已检查 ${state.checksCount} 次
+📈 发现 ${state.opportunityHistory.length} 个机会
+
+💡 持续监控中...
+      ` : `
+💓 *Scout Heartbeat Report*
+
+✅ Running | ⏱️ ${hours}h ${minutes}m
+📊 ${state.checksCount} checks completed
+📈 ${state.opportunityHistory.length} opportunities found
+
+💡 Monitoring continues...
+      `;
+      
+      bot.sendMessage(config.telegram.chatId, heartbeatMsg, { parse_mode: 'Markdown' }).catch(() => {});
+      state.lastHeartbeat = now;
+    }
     
   } catch (error) {
     console.error('❌ mainLoop execution failed:', error.message);

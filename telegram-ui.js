@@ -586,11 +586,10 @@ GitHub: github.com/pjl914335852-ux/openclaw-trading-scout
       this.bot.deleteMessage(chatId, messageId).catch(() => {});
       this.handleHistory({ chat: { id: chatId } });
     } else if (data === 'help') {
-      // Delete old message with 2-3s delay to avoid bugs
-      setTimeout(() => {
-        this.bot.deleteMessage(chatId, messageId).catch(() => {});
-        this.handleHelp({ chat: { id: chatId } });
-      }, 2500); // 2.5 seconds delay
+      // Delete old message and send help
+      this.bot.answerCallbackQuery(query.id);
+      this.bot.deleteMessage(chatId, messageId).catch(() => {});
+      this.handleHelp({ chat: { id: chatId } });
     } else if (data === 'lang_en') {
       // Switch language and refresh current view
       this.lang = 'en';
@@ -792,12 +791,14 @@ Send /cancel to cancel
       (this.config.trading.autoPush ? '✅ 自动推送已启用' : '❌ 自动推送已禁用') :
       (this.config.trading.autoPush ? '✅ Auto push enabled' : '❌ Auto push disabled');
     
-    // Answer callback first
+    // Answer callback with alert
     this.bot.answerCallbackQuery(queryId, { text, show_alert: false });
     
-    // Delete old message and refresh pairs view
-    this.bot.deleteMessage(chatId, messageId).catch(() => {});
-    this.handlePairs({ chat: { id: chatId } });
+    // Just refresh the current message, don't create new one
+    setTimeout(() => {
+      this.bot.deleteMessage(chatId, messageId).catch(() => {});
+      this.handlePairs({ chat: { id: chatId } });
+    }, 500);
   }
   
   // Handle text input for pair/interval
