@@ -446,12 +446,12 @@ ${index + 1}. *${opp.pair1} / ${opp.pair2}*
   handleHelp(msg) {
     const chatId = msg.chat.id;
     
-    const helpText = this.lang === 'zh' ? `
+    const helpText1 = this.lang === 'zh' ? `
 ❓ *帮助 & 关于我们*
 
 *🦞 关于 OpenClaw 交易侦察员*
 
-我们是一个专注于加密货币套利监控的智能助手，由 NOFX 社区精准数据支持。我们的目标是帮助交易者发现市场中的套利机会，提供实时监控和智能分析。
+我们是一个专注于加密货币套利监控的智能助手，由 NOFX 社区精准数据支持。
 
 *🔧 工作原理:*
 
@@ -467,51 +467,12 @@ ${index + 1}. *${opp.pair1} / ${opp.pair2}*
 • 每 2 小时自动发送运行状态报告
 • 显示运行时间、检查次数、发现机会数
 • 让你知道机器人一直在工作
-
-*📋 可用命令:*
-
-/start - 开始使用
-/status - 查看运行状态
-/pairs - 管理交易对
-/history - 查看历史机会
-/lang - 切换语言
-/help - 显示此帮助
-
-*🎯 核心功能:*
-
-• *实时监控*: 24/7 监控你配置的交易对
-• *套利检测*: 当价差超过阈值时立即通知
-• *风险评估*: 每个机会都有风险等级（低/中/高）
-• *智能管理*: 自定义交易对、刷新间隔、推送设置
-• *AI 推荐*: 可选的 AI 智能体推荐交易对
-
-*💡 使用提示:*
-
-1. 点击"交易对修改"管理监控币种
-2. 设置合适的刷新间隔（推荐 30-60 秒）
-3. 开启自动推送接收实时通知
-4. 定期查看历史记录分析机会
-
-*🔒 安全提示:*
-
-• 只使用只读 API 密钥
-• 不要分享你的 Bot Token
-• 定期检查 API 密钥权限
-• 本机器人不会要求你的私钥或密码
-
-*📞 联系我们:*
-
-Telegram: @Ee_7t
-GitHub: github.com/pjl914335852-ux/openclaw-trading-scout
-
-💰 由 NOFX 社区精准数据支持
-🦞 OpenClaw Trading Scout v1.0
     ` : `
 ❓ *Help & About Us*
 
 *🦞 About OpenClaw Trading Scout*
 
-We are an intelligent assistant focused on cryptocurrency arbitrage monitoring, powered by NOFX community precision data. Our goal is to help traders discover arbitrage opportunities in the market with real-time monitoring and intelligent analysis.
+We are an intelligent assistant focused on cryptocurrency arbitrage monitoring, powered by NOFX community precision data.
 
 *🔧 How It Works:*
 
@@ -527,45 +488,70 @@ We are an intelligent assistant focused on cryptocurrency arbitrage monitoring, 
 • Sends status report every 2 hours automatically
 • Shows uptime, checks count, opportunities found
 • Lets you know the bot is always working
+    `;
+    
+    const helpText2 = this.lang === 'zh' ? `
+*📋 可用命令:*
 
+/start - 开始使用
+/status - 查看运行状态
+/pairs - 管理交易对
+/history - 查看历史机会
+/help - 显示此帮助
+
+*🎯 核心功能:*
+
+• 实时监控多个交易对
+• 发现价差套利机会
+• 评估风险等级
+• 智能管理设置
+
+*💡 使用提示:*
+
+1. 点击"交易对修改"管理币种
+2. 设置刷新间隔（推荐 30-60 秒）
+3. 开启自动推送接收通知
+4. 定期查看历史记录
+
+*🔒 安全提示:*
+
+• 只使用只读 API 密钥
+• 不要分享 Bot Token
+• 本机器人不会要求私钥
+
+*📞 联系:* @Ee_7t
+💰 由 NOFX 社区精准数据支持
+    ` : `
 *📋 Available Commands:*
 
 /start - Get started
-/status - View running status
-/pairs - Manage trading pairs
-/history - View historical opportunities
-/lang - Switch language
-/help - Show this help
+/status - View status
+/pairs - Manage pairs
+/history - View history
+/help - Show help
 
 *🎯 Core Features:*
 
-• *Real-time Monitoring*: 24/7 monitoring of your configured pairs
-• *Arbitrage Detection*: Instant notification when spread exceeds threshold
-• *Risk Assessment*: Each opportunity has a risk level (low/medium/high)
-• *Smart Management*: Custom pairs, refresh interval, push settings
-• *AI Recommendations*: Optional AI agent recommended pairs
+• Real-time monitoring
+• Arbitrage detection
+• Risk assessment
+• Smart management
 
 *💡 Usage Tips:*
 
-1. Click "Modify Pairs" to manage monitored coins
-2. Set appropriate refresh interval (recommended 30-60s)
-3. Enable auto push to receive real-time notifications
-4. Check history regularly to analyze opportunities
+1. Click "Modify Pairs" to manage coins
+2. Set refresh interval (30-60s recommended)
+3. Enable auto push for notifications
+4. Check history regularly
 
-*🔒 Security Tips:*
+*🔒 Security:*
 
 • Only use read-only API keys
-• Don't share your Bot Token
-• Regularly check API key permissions
-• This bot will never ask for your private keys or passwords
+• Don't share Bot Token
+• Bot never asks for private keys
 
-*📞 Contact Us:*
-
-Telegram: @Ee_7t
-GitHub: github.com/pjl914335852-ux/openclaw-trading-scout
-
+*📞 Contact:* @Ee_7t
 💰 Powered by NOFX Community Data
-🦞 OpenClaw Trading Scout v1.0
     `;
     
     const keyboard = {
@@ -576,10 +562,16 @@ GitHub: github.com/pjl914335852-ux/openclaw-trading-scout
       ]
     };
     
-    this.bot.sendMessage(chatId, helpText, { 
-      parse_mode: 'Markdown',
-      reply_markup: keyboard
-    });
+    // Send first part
+    this.bot.sendMessage(chatId, helpText1, { parse_mode: 'Markdown' });
+    
+    // Send second part with keyboard after a short delay
+    setTimeout(() => {
+      this.bot.sendMessage(chatId, helpText2, { 
+        parse_mode: 'Markdown',
+        reply_markup: keyboard
+      });
+    }, 500);
   }
   
   // Handle language change
