@@ -24,7 +24,55 @@ An AI-powered trading assistant built with OpenClaw that:
 
 ---
 
-## ✨ Key Features
+## 🦞 What is Trading Scout?
+
+**OpenClaw Trading Scout** is a free, open-source cryptocurrency arbitrage monitoring tool built on the OpenClaw framework. It runs as a standalone Node.js application that monitors Binance trading pairs 24/7 and sends instant alerts via Telegram when arbitrage opportunities are detected.
+
+### 💰 Completely Free - No Token Consumption
+
+**Important: This tool does NOT consume any tokens or incur any costs!**
+
+- ✅ **No AI API calls** - Pure data monitoring, no Claude/OpenAI/GPT usage
+- ✅ **No Binance fees** - Uses free public API endpoints
+- ✅ **No Telegram fees** - Bot API is completely free
+- ✅ **No hidden costs** - 100% free to run 24/7
+
+### 📊 About Binance API Costs
+
+**Q: Does using Binance data consume tokens or cost money?**
+
+**A: No! Completely FREE!**
+
+**Public Data (No API Key Required):**
+- Price data (`/api/v3/ticker/price`) - ✅ FREE
+- 24h ticker (`/api/v3/ticker/24hr`) - ✅ FREE
+- Kline/candlestick data - ✅ FREE
+- Order book depth - ✅ FREE
+
+**Private Data (Read-Only API Key Required):**
+- Account balance (`/api/v3/account`) - ✅ FREE
+- Order history - ✅ FREE
+- Trade history - ✅ FREE
+
+**What are the limits?**
+- Not "token consumption" but "rate limiting" (anti-abuse)
+- Binance allows up to 1,200 requests/minute
+- Our tool uses only ~20 requests/minute (very conservative)
+- This is a speed limit, not a cost - like a free highway with a speed limit
+
+**Cost Breakdown:**
+
+| Service | Cost | Notes |
+|---------|------|-------|
+| Binance Price Data | ✅ FREE | Public API, no key needed |
+| Binance Volume Data | ✅ FREE | Public API, no key needed |
+| Binance Account Balance | ✅ FREE | Requires read-only API key |
+| Telegram Notifications | ✅ FREE | Bot API is free |
+| Server Hosting | ✅ FREE | Your own server |
+
+**Total Cost: $0/day = $0/month = $0/year**
+
+### 🎯 Key Features
 
 ### 1. Multi-Pair Monitoring
 - Simultaneous tracking of multiple trading pairs
