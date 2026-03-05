@@ -17,9 +17,71 @@
 
 ---
 
-## ⚙️ 第二步：配置
+## 🔑 第二步：获取币安 API 密钥（可选）
+
+### 什么时候需要 API 密钥？
+
+**需要：**
+- ✅ 查看账户余额
+- ✅ 未来的自动交易功能（Phase 2）
+
+**不需要：**
+- ❌ 只监控价格和发现机会
+- ❌ 接收 Telegram 通知
+
+### 如何获取币安 API 密钥
+
+#### 1. 登录币安账户
+访问 [https://www.binance.com](https://www.binance.com) 并登录
+
+#### 2. 进入 API 管理
+- 点击右上角头像
+- 选择 "API Management"（API 管理）
+
+#### 3. 创建 API Key
+- 点击 "Create API"（创建 API）
+- 输入标签名称（如：Trading Scout）
+- 完成安全验证（邮箱/手机验证码）
+
+#### 4. 配置权限（重要！）
+
+**必须启用：**
+- ✅ **Enable Reading** - 读取权限（必需）
+- ✅ **Enable Spot & Margin Trading** - 现货交易（未来自动交易需要）
+
+**必须禁用：**
+- ❌ **Enable Withdrawals** - 提现权限（安全起见，禁用！）
+
+**推荐设置：**
+- ✅ **Restrict access to trusted IPs** - IP 白名单
+  - 添加你的服务器 IP：`139.180.208.140`
+  - 或者你的本地 IP
+
+#### 5. 保存密钥
+- 复制 **API Key**（公钥）
+- 复制 **Secret Key**（私钥，只显示一次！）
+- ⚠️ **Secret Key 只显示一次，务必保存好！**
+
+#### 6. 测试网（推荐新手）
+
+如果想先测试，可以使用币安测试网：
+
+1. 访问 [https://testnet.binance.vision](https://testnet.binance.vision)
+2. 用 GitHub 账号登录
+3. 生成测试网 API Key
+4. 配置时设置 `"testnet": true`
+
+---
+
+## ⚙️ 第三步：配置
+
+## ⚙️ 第三步：配置
 
 编辑 `config.json` 文件：
+
+### 最小配置（只监控）
+
+如果只想监控价格和接收通知，不需要 API Key：
 
 ```json
 {
@@ -36,17 +98,66 @@
 }
 ```
 
+### 完整配置（包含 API Key）
+
+如果想查看余额和使用未来的交易功能：
+
+```json
+{
+  "cryptoex": {
+    "apiKey": "你的_API_KEY",
+    "apiSecret": "你的_SECRET_KEY",
+    "testnet": false
+  },
+  "telegram": {
+    "botToken": "你的_BOT_TOKEN",
+    "chatId": "你的_CHAT_ID"
+  },
+  "trading": {
+    "pairs": ["BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT"],
+    "threshold": 0.5,
+    "checkInterval": 30000,
+    "minVolume": 1000000,
+    "stopLoss": 2.0,
+    "takeProfit": 5.0,
+    "trailingStop": 1.5,
+    "maxPositions": 3,
+    "maxPositionSize": 0.1,
+    "minPositionSize": 0.02
+  }
+}
+```
+
 **配置说明：**
+
+**Binance API（可选）：**
+- `apiKey`: 从币安 API 管理获取
+- `apiSecret`: 从币安 API 管理获取（只显示一次！）
+- `testnet`: 是否使用测试网（`true` = 测试网，`false` = 正式网）
+
+**Telegram（必需）：**
 - `botToken`: 从 BotFather 获取的 Token
 - `chatId`: 你的 Telegram 用户 ID
+
+**交易参数：**
 - `pairs`: 要监控的交易对（可以添加更多）
 - `threshold`: 价差阈值（0.5 = 0.5%）
 - `checkInterval`: 检查间隔（30000 = 30秒）
 - `minVolume`: 最小交易量（1000000 = 100万美元）
 
+**风险控制（可选）：**
+- `stopLoss`: 止损百分比（2.0 = 2%）
+- `takeProfit`: 止盈百分比（5.0 = 5%）
+- `trailingStop`: 移动止损百分比（1.5 = 1.5%）
+
+**仓位管理（可选）：**
+- `maxPositions`: 最大持仓数（3 = 最多 3 个）
+- `maxPositionSize`: 最大仓位（0.1 = 10%）
+- `minPositionSize`: 最小仓位（0.02 = 2%）
+
 ---
 
-## 🎯 第三步：运行
+## 🎯 第四步：运行
 
 ```bash
 # 进入项目目录
@@ -55,6 +166,52 @@ cd /root/.openclaw/workspace/crypto-trading-scout
 # 运行监控程序
 node crypto-scout.js
 ```
+
+---
+
+## 🔒 安全提示
+
+### API Key 安全
+
+1. **永远不要分享你的 Secret Key**
+   - Secret Key 只显示一次
+   - 任何人拿到 Secret Key 都可以操作你的账户
+
+2. **禁用提现权限**
+   - 创建 API Key 时，务必禁用 "Enable Withdrawals"
+   - 即使 API Key 泄露，也无法提现
+
+3. **使用 IP 白名单**
+   - 限制只有特定 IP 可以使用 API Key
+   - 添加你的服务器 IP：`139.180.208.140`
+
+4. **定期更换 API Key**
+   - 建议每 3-6 个月更换一次
+   - 如果怀疑泄露，立即删除并重新创建
+
+5. **使用测试网测试**
+   - 新手建议先用测试网（testnet）
+   - 测试网使用虚拟资金，不会有真实损失
+
+6. **不要把 config.json 推送到 GitHub**
+   - config.json 包含敏感信息
+   - 已添加到 .gitignore，但要确认
+
+### 交易安全
+
+1. **这是监控工具，不会自动交易**
+   - 所有机会需要人工判断
+   - 不会自动下单
+
+2. **价差不等于利润**
+   - 需要考虑手续费（0.1%）
+   - 需要考虑滑点
+   - 需要考虑执行时间
+
+3. **建议先观察**
+   - 运行几天，了解市场规律
+   - 记录哪些机会最频繁
+   - 分析哪些机会风险最低
 
 ---
 

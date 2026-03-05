@@ -67,6 +67,7 @@ An AI-powered trading assistant built with OpenClaw that:
 ### Prerequisites
 - Node.js 18+
 - Telegram Bot Token
+- Binance API Key (optional, for account balance and future trading features)
 
 ### Installation
 
@@ -87,6 +88,43 @@ npm test
 # Start monitoring
 npm start
 ```
+
+### API Key Setup (Optional)
+
+**When do you need it?**
+- ✅ To view your account balance
+- ✅ For future auto-trading features (Phase 2)
+- ❌ NOT needed for price monitoring and alerts
+
+**How to get Binance API Key:**
+
+1. Log in to [Binance](https://www.binance.com)
+2. Go to Profile → API Management
+3. Create a new API Key
+4. **Important Security Settings:**
+   - ✅ Enable "Enable Reading" (required)
+   - ✅ Enable "Enable Spot & Margin Trading" (for future trading)
+   - ❌ Disable "Enable Withdrawals" (for safety)
+   - ✅ Restrict access to trusted IPs (recommended)
+
+5. Copy API Key and Secret Key
+6. Add to `config.json`:
+
+```json
+{
+  "cryptoex": {
+    "apiKey": "your_api_key_here",
+    "apiSecret": "your_secret_key_here",
+    "testnet": false
+  }
+}
+```
+
+**Security Tips:**
+- 🔒 Never share your API Secret
+- 🔒 Always disable withdrawal permissions
+- 🔒 Use IP whitelist when possible
+- 🔒 Start with testnet first (`"testnet": true`)
 
 ---
 
@@ -181,9 +219,9 @@ Edit `config.json`:
 ```json
 {
   "cryptoex": {
-    "apiKey": "YOUR_API_KEY",
-    "apiSecret": "YOUR_API_SECRET",
-    "testnet": true  // Use testnet for safety
+    "apiKey": "YOUR_API_KEY",        // Optional: for balance check
+    "apiSecret": "YOUR_API_SECRET",  // Optional: for balance check
+    "testnet": true                  // Use testnet for safety
   },
   "telegram": {
     "botToken": "YOUR_BOT_TOKEN",
@@ -209,6 +247,17 @@ Edit `config.json`:
 ```
 
 ### Configuration Guide
+
+**Binance API (Optional):**
+- Leave empty (`""`) if you only want price monitoring
+- Required for:
+  - Account balance display
+  - Future auto-trading features
+- Get from: Binance → Profile → API Management
+
+**Telegram (Required):**
+- `botToken`: Get from @BotFather on Telegram
+- `chatId`: Get from @userinfobot on Telegram
 
 **Risk Control:**
 - `stopLoss`: Percentage loss to trigger automatic exit
