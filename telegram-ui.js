@@ -300,7 +300,19 @@ ${aiPairs.map(p => `• ${p}`).join('\n')}
         '😴 *暂无历史记录*\n\n还没有发现套利机会。我会持续监控，一旦发现机会就会通知你！' :
         '😴 *No History Yet*\n\nNo arbitrage opportunities found yet. I\'m continuously monitoring and will notify you as soon as I find one!';
       
-      this.bot.sendMessage(chatId, noHistoryText, { parse_mode: 'Markdown' });
+      const keyboard = {
+        inline_keyboard: [
+          [
+            { text: this.lang === 'zh' ? '🏠 返回主菜单' : '🏠 Back to Menu', callback_data: 'start' },
+            { text: this.lang === 'zh' ? '📊 运行状态' : '📊 Status', callback_data: 'status' }
+          ]
+        ]
+      };
+      
+      this.bot.sendMessage(chatId, noHistoryText, { 
+        parse_mode: 'Markdown',
+        reply_markup: keyboard
+      });
       return;
     }
     
@@ -460,24 +472,53 @@ GitHub: github.com/pjl914335852-ux/openclaw-trading-scout
   // Handle inline keyboard callbacks
   handleCallback(query) {
     const chatId = query.message.chat.id;
+    const messageId = query.message.message_id;
     const data = query.data;
     
     // Answer callback to remove loading state
     this.bot.answerCallbackQuery(query.id);
     
     // Handle different callbacks
-    if (data === 'status') {
+    if (data === 'start') {
+      // Delete old message and send new start message
+      this.bot.deleteMessage(chatId, messageId).catch(() => {});
+      this.handleStart({ chat: { id: chatId } });
+    } else if (data === 'status') {
+      // Delete old message and send new status
+      this.bot.deleteMessage(chatId, messageId).catch(() => {});
       this.handleStatus({ chat: { id: chatId } });
     } else if (data === 'pairs') {
+      // Delete old message and send new pairs
+      this.bot.deleteMessage(chatId, messageId).catch(() => {});
       this.handlePairs({ chat: { id: chatId } });
     } else if (data === 'history') {
+      // Delete old message and send new history
+      this.bot.deleteMessage(chatId, messageId).catch(() => {});
       this.handleHistory({ chat: { id: chatId } });
     } else if (data === 'help') {
+      // Delete old message and send new help
+      this.bot.deleteMessage(chatId, messageId).catch(() => {});
       this.handleHelp({ chat: { id: chatId } });
     } else if (data === 'lang_en') {
-      this.handleLanguage({ chat: { id: chatId } }, 'en');
+      // Switch language and refresh current view
+      this.lang = 'en';
+      this.bot.answerCallbackQuery(query.id, { 
+        text: '✅ Language switched to English',
+        show_alert: false
+      });
+      // Delete old message and send new start message in English
+      this.bot.deleteMessage(chatId, messageId).catch(() => {});
+      this.handleStart({ chat: { id: chatId } });
     } else if (data === 'lang_zh') {
-      this.handleLanguage({ chat: { id: chatId } }, 'zh');
+      // Switch language and refresh current view
+      this.lang = 'zh';
+      this.bot.answerCallbackQuery(query.id, { 
+        text: '✅ 语言已切换到中文',
+        show_alert: false
+      });
+      // Delete old message and send new start message in Chinese
+      this.bot.deleteMessage(chatId, messageId).catch(() => {});
+      this.handleStart({ chat: { id: chatId } });
     }
   }
   
