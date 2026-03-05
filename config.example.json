@@ -1,8 +1,8 @@
 {
-  "binance": {
+  "cryptoex": {
     "apiKey": "",
     "apiSecret": "",
-    "testnet": false
+    "testnet": true
   },
   "telegram": {
     "botToken": "",
@@ -11,8 +11,14 @@
   "trading": {
     "pairs": ["BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT"],
     "threshold": 0.5,
-    "checkInterval": 5000,
-    "minVolume": 1000000
+    "checkInterval": 30000,
+    "minVolume": 1000000,
+    "stopLoss": 2.0,
+    "takeProfit": 5.0,
+    "trailingStop": 1.5,
+    "maxPositions": 3,
+    "maxPositionSize": 0.1,
+    "minPositionSize": 0.02
   },
   "logging": {
     "enabled": true,

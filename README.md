@@ -36,15 +36,29 @@ An AI-powered trading assistant built with OpenClaw that:
 - Configurable threshold (default 0.5%)
 - Risk-adjusted opportunity scoring
 
-### 3. Telegram Integration
+### 3. Position Management 🆕
+- **Smart Position Sizing** - Auto-calculate position size based on balance and risk
+- **Max Positions Control** - Limit concurrent positions (default: 3)
+- **Position Tracking** - Real-time monitoring of all open positions
+- **Historical Records** - Complete trade history with P&L
+
+### 4. Risk Control 🆕
+- **Stop Loss** - Automatic stop loss at 2% (configurable)
+- **Take Profit** - Automatic take profit at 5% (configurable)
+- **Trailing Stop** - Dynamic stop loss that follows price (1.5%)
+- **Risk Assessment** - Evaluate opportunity risk level (low/medium/high)
+
+### 5. Order Tracking 🆕
+- **Real-time Monitoring** - Check positions every 5 seconds
+- **Auto Execution** - Trigger stop loss/take profit automatically
+- **P&L Calculation** - Real-time unrealized and realized P&L
+- **Trade Duration** - Track how long each position is held
+
+### 6. Telegram Integration
 - Instant push notifications
 - Trading signal details
+- Position updates and alerts
 - Historical performance stats
-
-### 4. Data Analytics
-- Price trend visualization
-- Opportunity frequency tracking
-- Success rate statistics
 
 ---
 
@@ -123,6 +137,7 @@ function findArbitrageOpportunities(prices, volumes) {
 
 ## 📱 Example Output
 
+### Basic Monitoring
 ```
 🦞 Trading Scout Checking...
 
@@ -131,12 +146,32 @@ function findArbitrageOpportunities(prices, volumes) {
   ETHUSDT: $2,857.98
   BNBUSDT: $623.23
 
+💰 Account Balance:
+  USDT: 1000.00 (Available: 900.00)
+  BTC: 0.0103 (Available: 0.0103)
+
+📈 Active Positions:
+  BTCUSDT: 0.01 @ $96,000 (+0.53%)
+    Stop Loss: $94,080 | Take Profit: $100,800
+
 🎯 Arbitrage Opportunity Found:
   BNBUSDT / ETHUSDT
-  Spread: 0.62%
+  Spread: 0.62% | Risk: medium
   Suggestion: Buy ETHUSDT, Sell BNBUSDT
 
 ✅ Telegram notification sent
+```
+
+### Position Closed
+```
+🔔 Position Closed
+
+Pair: BTCUSDT
+Entry: $96,000
+Exit: $100,800
+P&L: +5.00% ($48.00)
+Reason: Take Profit
+Duration: 2h 35m
 ```
 
 ---
@@ -147,6 +182,11 @@ Edit `config.json`:
 
 ```json
 {
+  "cryptoex": {
+    "apiKey": "YOUR_API_KEY",
+    "apiSecret": "YOUR_API_SECRET",
+    "testnet": true  // Use testnet for safety
+  },
   "telegram": {
     "botToken": "YOUR_BOT_TOKEN",
     "chatId": "YOUR_CHAT_ID"
@@ -154,14 +194,38 @@ Edit `config.json`:
   "trading": {
     "pairs": ["BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT"],
     "threshold": 0.5,
-    "checkInterval": 30000
-  },
-  "binance": {
-    "apiKey": "YOUR_API_KEY",
-    "apiSecret": "YOUR_API_SECRET"
+    "checkInterval": 30000,
+    "minVolume": 1000000,
+    
+    // Risk Control
+    "stopLoss": 2.0,        // 2% stop loss
+    "takeProfit": 5.0,      // 5% take profit
+    "trailingStop": 1.5,    // 1.5% trailing stop
+    
+    // Position Management
+    "maxPositions": 3,      // Max 3 concurrent positions
+    "maxPositionSize": 0.1, // Max 10% of balance per position
+    "minPositionSize": 0.02 // Min 2% of balance per position
   }
 }
 ```
+
+### Configuration Guide
+
+**Risk Control:**
+- `stopLoss`: Percentage loss to trigger automatic exit
+- `takeProfit`: Percentage gain to trigger automatic exit
+- `trailingStop`: Dynamic stop loss that follows price
+
+**Position Management:**
+- `maxPositions`: Maximum number of concurrent positions
+- `maxPositionSize`: Maximum percentage of balance per position
+- `minPositionSize`: Minimum percentage of balance per position
+
+**Safety First:**
+- Always start with `testnet: true`
+- Test thoroughly before using real funds
+- Start with small position sizes
 
 ---
 
@@ -196,20 +260,26 @@ Edit `config.json`:
 
 ## 📈 Roadmap
 
-**Phase 1** (Current)
+**Phase 1** ✅ (Completed)
 - ✅ Multi-pair monitoring
 - ✅ Arbitrage detection
 - ✅ Telegram alerts
+- ✅ Position management
+- ✅ Risk control (stop loss/take profit/trailing stop)
+- ✅ Order tracking
 
-**Phase 2** (Next)
+**Phase 2** 🔄 (In Progress)
+- 🔄 Auto-execution (testnet)
 - 🔄 Web dashboard
-- 🔄 More strategies (grid, trend)
+- 🔄 More strategies (grid, trend following)
 - 🔄 Backtesting system
 
-**Phase 3** (Future)
-- 📋 Auto-execution
+**Phase 3** 📋 (Planned)
+- 📋 Live trading (mainnet)
 - 📋 Strategy marketplace
 - 📋 Mobile app
+- 📋 Multi-exchange support
+- 📋 Advanced analytics
 
 ---
 
