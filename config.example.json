@@ -1,24 +1,24 @@
 {
-  "cryptoex": {
-    "apiKey": "",
-    "apiSecret": "",
-    "testnet": true
-  },
   "telegram": {
     "botToken": "",
     "chatId": ""
   },
   "trading": {
     "pairs": ["BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT"],
+    "customPairs": [],
+    "maxCustomPairs": 4,
     "threshold": 0.5,
     "checkInterval": 30000,
-    "minVolume": 1000000,
-    "stopLoss": 2.0,
-    "takeProfit": 5.0,
-    "trailingStop": 1.5,
-    "maxPositions": 3,
-    "maxPositionSize": 0.1,
-    "minPositionSize": 0.02
+    "minVolume": 1000000
+  },
+  "aiAgent": {
+    "enabled": false,
+    "recommendedPairs": []
+  },
+  "rateLimit": {
+    "maxRequestsPerMinute": 20,
+    "priceUpdateInterval": 30000,
+    "volumeUpdateInterval": 60000
   },
   "logging": {
     "enabled": true,

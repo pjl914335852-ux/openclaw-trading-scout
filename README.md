@@ -27,37 +27,62 @@ An AI-powered trading assistant built with OpenClaw that:
 ## ✨ Key Features
 
 ### 1. Multi-Pair Monitoring
-- Simultaneous tracking of BTC, ETH, BNB, SOL
-- Real-time price updates every 30 seconds
+- Simultaneous tracking of multiple trading pairs
+- **Configurable update interval** (minimum 10s, recommended 30s)
+- Real-time price updates with intelligent caching
 - Volume and volatility analysis
 
-### 2. Arbitrage Detection
+### 2. 🔧 Custom Token Monitoring
+- **Add up to 4 custom trading pairs** of your choice
+- Monitor specific tokens you're interested in
+- Flexible configuration for different strategies
+- Perfect for tracking niche or emerging tokens
+
+### 3. 🤖 AI Agent Recommendations
+- **AI-powered token selection** across different categories:
+  - `trending` - Top market cap coins (BTC, ETH, BNB, SOL)
+  - `defi` - DeFi ecosystem (UNI, AAVE, LINK, MKR)
+  - `layer2` - Layer 2 solutions (MATIC, ARB, OP)
+  - `meme` - Meme coins (DOGE, SHIB, PEPE)
+- Automatically includes recommended pairs in monitoring
+- Easy category switching via configuration
+
+### 4. Arbitrage Detection
 - Cross-pair spread analysis
 - Configurable threshold (default 0.5%)
 - Risk-adjusted opportunity scoring
+- Smart filtering by volume and liquidity
 
-### 3. Position Management 🆕
+### 5. 🛡️ API Rate Limiting Protection
+- **Intelligent request throttling** (default 20 req/min)
+- **Separate update intervals** for price and volume data
+- **Smart caching** to minimize API calls
+- **Prevents IP bans** from exchange
+- Configurable limits for different use cases
+
+### 6. Position Management 🆕
 - **Smart Position Sizing** - Auto-calculate position size based on balance and risk
 - **Max Positions Control** - Limit concurrent positions (default: 3)
 - **Position Tracking** - Real-time monitoring of all open positions
 - **Historical Records** - Complete trade history with P&L
 
-### 4. Risk Control 🆕
+### 7. Risk Control 🆕
 - **Stop Loss** - Automatic stop loss at 2% (configurable)
 - **Take Profit** - Automatic take profit at 5% (configurable)
 - **Trailing Stop** - Dynamic stop loss that follows price (1.5%)
 - **Risk Assessment** - Evaluate opportunity risk level (low/medium/high)
 
-### 5. Order Tracking 🆕
+### 8. Order Tracking 🆕
 - **Real-time Monitoring** - Check positions every 5 seconds
 - **Auto Execution** - Trigger stop loss/take profit automatically
 - **P&L Calculation** - Real-time unrealized and realized P&L
 - **Trade Duration** - Track how long each position is held
 
-### 6. Telegram Integration
+### 9. Telegram Integration
 - Instant push notifications
-- Trading signal details
+- Trading signal details with risk levels
 - Position updates and alerts
+- **NOFX trading recommendation** included in alerts
 - Historical performance stats
 
 ---

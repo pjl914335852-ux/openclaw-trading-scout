@@ -27,6 +27,24 @@ function validateConfig(config) {
     process.exit(1);
   }
   
+  // 验证自定义交易对数量
+  const customPairs = config.trading.customPairs || [];
+  const maxCustom = config.trading.maxCustomPairs || 4;
+  if (customPairs.length > maxCustom) {
+    console.error(`❌ 自定义交易对超过限制: ${customPairs.length}/${maxCustom}`);
+    console.error('请减少 trading.customPairs 中的交易对数量');
+    process.exit(1);
+  }
+  
+  // 验证更新间隔（最小 10 秒，防止 API 限流）
+  const minInterval = 10000;
+  const priceInterval = config.rateLimit?.priceUpdateInterval || config.trading.checkInterval;
+  if (priceInterval < minInterval) {
+    console.error(`❌ 价格更新间隔过短: ${priceInterval}ms (最小 ${minInterval}ms)`);
+    console.error('请增加 rateLimit.priceUpdateInterval 或 trading.checkInterval');
+    process.exit(1);
+  }
+  
   console.log('✅ 配置验证通过');
 }
 
@@ -47,6 +65,55 @@ try {
   process.exit(1);
 }
 
+// ==================== AI 智能体推荐 ====================
+
+const AI_AGENT_RECOMMENDATIONS = {
+  trending: [
+    'BTCUSDT',  // Bitcoin - 市值第一
+    'ETHUSDT',  // Ethereum - 智能合约平台
+    'BNBUSDT',  // Binance Coin - 交易所代币
+    'SOLUSDT',  // Solana - 高性能公链
+  ],
+  defi: [
+    'UNIUSDT',  // Uniswap - DEX 龙头
+    'AAVEUSDT', // Aave - 借贷协议
+    'LINKUSDT', // Chainlink - 预言机
+    'MKRUSDT',  // Maker - 稳定币协议
+  ],
+  layer2: [
+    'MATICUSDT', // Polygon - 以太坊扩容
+    'ARBUSDT',   // Arbitrum - Layer 2
+    'OPUSDT',    // Optimism - Layer 2
+  ],
+  meme: [
+    'DOGEUSDT',  // Dogecoin
+    'SHIBUSDT',  // Shiba Inu
+    'PEPEUSDT',  // Pepe
+  ]
+};
+
+function getAIRecommendations() {
+  if (!config.aiAgent?.enabled) {
+    return [];
+  }
+  
+  const category = config.aiAgent.category || 'trending';
+  return AI_AGENT_RECOMMENDATIONS[category] || AI_AGENT_RECOMMENDATIONS.trending;
+}
+
+// ==================== 获取所有监控的交易对 ====================
+
+function getAllPairs() {
+  const basePairs = config.trading.pairs || [];
+  const customPairs = config.trading.customPairs || [];
+  const aiPairs = getAIRecommendations();
+  
+  // 合并并去重
+  const allPairs = [...new Set([...basePairs, ...customPairs, ...aiPairs])];
+  
+  return allPairs;
+}
+
 // ==================== 初始化 ====================
 
 let bot;
@@ -63,17 +130,76 @@ const BINANCE_API = 'https://api.binance.com/api/v3';
 // 状态管理
 const state = {
   priceCache: {},
+  volumeCache: {},
   opportunityHistory: [],
-  isFirstRun: true
+  isFirstRun: true,
+  lastPriceUpdate: 0,
+  lastVolumeUpdate: 0,
+  requestCount: 0,
+  requestResetTime: Date.now()
 };
 
-const MAX_HISTORY = 1000; // 最多保留 1000 条历史
+const MAX_HISTORY = 1000;
+
+// ==================== API 限流控制 ====================
+
+class RateLimiter {
+  constructor() {
+    this.maxRequestsPerMinute = config.rateLimit?.maxRequestsPerMinute || 20;
+    this.requestCount = 0;
+    this.windowStart = Date.now();
+  }
+  
+  async checkLimit() {
+    const now = Date.now();
+    const windowDuration = 60000; // 1 分钟
+    
+    // 重置计数器
+    if (now - this.windowStart > windowDuration) {
+      this.requestCount = 0;
+      this.windowStart = now;
+    }
+    
+    // 检查是否超限
+    if (this.requestCount >= this.maxRequestsPerMinute) {
+      const waitTime = windowDuration - (now - this.windowStart);
+      console.warn(`⚠️  API 请求达到限制 (${this.requestCount}/${this.maxRequestsPerMinute})`);
+      console.warn(`   等待 ${Math.ceil(waitTime / 1000)} 秒后继续...`);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+      this.requestCount = 0;
+      this.windowStart = Date.now();
+    }
+    
+    this.requestCount++;
+  }
+  
+  getStatus() {
+    return {
+      count: this.requestCount,
+      limit: this.maxRequestsPerMinute,
+      remaining: this.maxRequestsPerMinute - this.requestCount
+    };
+  }
+}
+
+const rateLimiter = new RateLimiter();
 
 // ==================== 获取价格 ====================
 
 async function fetchPrices() {
+  const now = Date.now();
+  const priceInterval = config.rateLimit?.priceUpdateInterval || config.trading.checkInterval;
+  
+  // 检查是否需要更新
+  if (now - state.lastPriceUpdate < priceInterval && Object.keys(state.priceCache).length > 0) {
+    return state.priceCache;
+  }
+  
   try {
-    const symbols = config.trading.pairs.map(p => `"${p}"`).join(',');
+    await rateLimiter.checkLimit();
+    
+    const pairs = getAllPairs();
+    const symbols = pairs.map(p => `"${p}"`).join(',');
     const response = await axios.get(`${BINANCE_API}/ticker/price`, {
       params: { symbols: `[${symbols}]` },
       timeout: 10000
@@ -84,6 +210,7 @@ async function fetchPrices() {
       prices[item.symbol] = parseFloat(item.price);
     });
     
+    state.lastPriceUpdate = now;
     return prices;
   } catch (error) {
     console.error('❌ 获取价格失败:', error.message);
@@ -94,18 +221,31 @@ async function fetchPrices() {
 // ==================== 获取交易量 ====================
 
 async function fetchVolumes() {
+  const now = Date.now();
+  const volumeInterval = config.rateLimit?.volumeUpdateInterval || 60000;
+  
+  // 检查是否需要更新（交易量更新频率可以更低）
+  if (now - state.lastVolumeUpdate < volumeInterval && Object.keys(state.volumeCache).length > 0) {
+    return state.volumeCache;
+  }
+  
   try {
+    await rateLimiter.checkLimit();
+    
     const response = await axios.get(`${BINANCE_API}/ticker/24hr`, {
       timeout: 10000
     });
     
     const volumes = {};
+    const pairs = getAllPairs();
+    
     response.data.forEach(item => {
-      if (config.trading.pairs.includes(item.symbol)) {
+      if (pairs.includes(item.symbol)) {
         volumes[item.symbol] = parseFloat(item.quoteVolume);
       }
     });
     
+    state.lastVolumeUpdate = now;
     return volumes;
   } catch (error) {
     console.error('❌ 获取交易量失败:', error.message);
@@ -118,11 +258,9 @@ async function fetchVolumes() {
 function assessRisk(spread, volumes, pair1, pair2) {
   let riskScore = 0;
   
-  // 价差越大，风险越低
   if (spread > 1.0) riskScore += 2;
   else if (spread > 0.7) riskScore += 1;
   
-  // 交易量越大，风险越低
   const avgVolume = (volumes[pair1] + volumes[pair2]) / 2;
   if (avgVolume > 100000000) riskScore += 2;
   else if (avgVolume > 50000000) riskScore += 1;
@@ -144,12 +282,10 @@ function findArbitrageOpportunities(prices, volumes) {
       const pair1 = pairs[i];
       const pair2 = pairs[j];
       
-      // 跳过交易量不足的交易对
       if (volumes[pair1] < minVolume || volumes[pair2] < minVolume) {
         continue;
       }
       
-      // 如果有历史价格，计算价格变化率
       if (state.priceCache[pair1] && state.priceCache[pair2]) {
         const change1 = ((prices[pair1] - state.priceCache[pair1]) / state.priceCache[pair1]) * 100;
         const change2 = ((prices[pair2] - state.priceCache[pair2]) / state.priceCache[pair2]) * 100;
@@ -212,6 +348,10 @@ async function mainLoop() {
   try {
     log('🦞 Trading Scout 正在检查...');
     
+    // 显示 API 限流状态
+    const limitStatus = rateLimiter.getStatus();
+    console.log(`📊 API 状态: ${limitStatus.count}/${limitStatus.limit} 请求 (剩余 ${limitStatus.remaining})`);
+    
     // 获取价格
     const prices = await fetchPrices();
     if (!prices) {
@@ -219,24 +359,31 @@ async function mainLoop() {
       return;
     }
     
-    // 获取交易量
+    // 获取交易量（使用缓存）
     const volumes = await fetchVolumes();
     if (!volumes || Object.keys(volumes).length === 0) {
-      console.error('⚠️  获取交易量失败，跳过本次检查\n');
-      return;
+      console.error('⚠️  获取交易量失败，使用缓存数据\n');
     }
     
     // 显示当前价格
     console.log('\n📊 当前价格:');
-    Object.entries(prices).forEach(([symbol, price]) => {
-      const volume = volumes[symbol] ? `(${(volumes[symbol] / 1000000).toFixed(1)}M)` : '';
-      console.log(`  ${symbol}: $${price.toLocaleString()} ${volume}`);
+    const allPairs = getAllPairs();
+    allPairs.forEach(symbol => {
+      const price = prices[symbol];
+      if (price) {
+        const volume = volumes[symbol] ? `(${(volumes[symbol] / 1000000).toFixed(1)}M)` : '';
+        const source = config.trading.customPairs?.includes(symbol) ? '🔧' : 
+                      getAIRecommendations().includes(symbol) ? '🤖' : '';
+        console.log(`  ${source}${symbol}: $${price.toLocaleString()} ${volume}`);
+      }
     });
     
     // 首次运行只初始化缓存
     if (state.isFirstRun) {
       Object.assign(state.priceCache, prices);
-      console.log('\n✅ 价格缓存已初始化，下次检查将开始发现机会\n');
+      Object.assign(state.volumeCache, volumes);
+      console.log('\n✅ 价格缓存已初始化，下次检查将开始发现机会');
+      console.log(`💡 监控 ${allPairs.length} 个交易对 (基础: ${config.trading.pairs.length}, 自定义: ${config.trading.customPairs?.length || 0}, AI: ${getAIRecommendations().length})`);
       console.log('─'.repeat(50) + '\n');
       state.isFirstRun = false;
       return;
@@ -268,6 +415,8 @@ ${opp.pair2} 变化: ${opp.change2}%
 💡 建议: ${opp.suggestion}
 
 ⏰ 时间: ${new Date(opp.timestamp).toLocaleString('zh-CN')}
+
+_💰 推荐使用 NOFX 在币安交易_
         `.trim();
         
         await sendTelegramAlert(message);
@@ -286,9 +435,12 @@ ${opp.pair2} 变化: ${opp.change2}%
     
     // 更新价格缓存
     Object.assign(state.priceCache, prices);
+    Object.assign(state.volumeCache, volumes);
     
     // 显示统计
     console.log(`📈 历史机会数: ${state.opportunityHistory.length}`);
+    console.log(`🔄 价格更新: ${Math.floor((Date.now() - state.lastPriceUpdate) / 1000)}s 前`);
+    console.log(`📊 交易量更新: ${Math.floor((Date.now() - state.lastVolumeUpdate) / 1000)}s 前`);
     console.log('─'.repeat(50) + '\n');
     
   } catch (error) {
@@ -303,12 +455,27 @@ async function start() {
   console.log('🦞 OpenClaw Trading Scout 启动');
   console.log('='.repeat(50) + '\n');
   
+  const allPairs = getAllPairs();
+  const customPairs = config.trading.customPairs || [];
+  const aiPairs = getAIRecommendations();
+  
   console.log('📋 配置信息:');
-  console.log(`  监控交易对: ${config.trading.pairs.join(', ')}`);
+  console.log(`  基础交易对: ${config.trading.pairs.join(', ')}`);
+  if (customPairs.length > 0) {
+    console.log(`  🔧 自定义交易对: ${customPairs.join(', ')} (${customPairs.length}/${config.trading.maxCustomPairs || 4})`);
+  }
+  if (aiPairs.length > 0) {
+    console.log(`  🤖 AI 智能体推荐: ${aiPairs.join(', ')}`);
+  }
+  console.log(`  总监控数: ${allPairs.length} 个交易对`);
   console.log(`  检查间隔: ${config.trading.checkInterval / 1000} 秒`);
+  console.log(`  价格更新: ${(config.rateLimit?.priceUpdateInterval || config.trading.checkInterval) / 1000} 秒`);
+  console.log(`  交易量更新: ${(config.rateLimit?.volumeUpdateInterval || 60000) / 1000} 秒`);
   console.log(`  价差阈值: ${config.trading.threshold}%`);
   console.log(`  最小交易量: $${(config.trading.minVolume || 1000000).toLocaleString()}`);
+  console.log(`  API 限流: ${config.rateLimit?.maxRequestsPerMinute || 20} 请求/分钟`);
   console.log(`  Telegram: ${config.telegram.chatId ? '已配置 ✅' : '未配置 ❌'}`);
+  console.log('\n💰 推荐使用 NOFX 在币安交易');
   console.log('\n' + '='.repeat(50) + '\n');
   
   // 立即执行一次
@@ -336,6 +503,9 @@ process.on('SIGINT', () => {
       console.log(`  ${i + 1}. ${opp.pair1}/${opp.pair2} - ${opp.spread}% (${opp.riskLevel})`);
     });
   }
+  
+  const limitStatus = rateLimiter.getStatus();
+  console.log(`\n📊 API 使用统计: ${limitStatus.count}/${limitStatus.limit} 请求`);
   
   console.log('\n👋 再见！\n');
   process.exit(0);
