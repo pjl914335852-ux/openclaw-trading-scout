@@ -51,6 +51,14 @@ class TelegramUI {
     this.bot.on('callback_query', (query) => {
       this.handleCallback(query);
     });
+    
+    // Handle text messages for pair/interval input
+    this.bot.on('message', (msg) => {
+      // Skip if it's a command
+      if (msg.text && msg.text.startsWith('/')) return;
+      
+      this.handleTextInput(msg);
+    });
   }
   
   // /start - Welcome message
@@ -119,7 +127,7 @@ I'm already running in the background! I'll notify you immediately when arbitrag
       inline_keyboard: [
         [
           { text: this.lang === 'zh' ? '📊 运行状态' : '📊 Status', callback_data: 'status' },
-          { text: this.lang === 'zh' ? '📈 交易对' : '📈 Pairs', callback_data: 'pairs' }
+          { text: this.lang === 'zh' ? '📈 交易对修改' : '📈 Modify Pairs', callback_data: 'pairs' }
         ],
         [
           { text: this.lang === 'zh' ? '📝 历史记录' : '📝 History', callback_data: 'history' },
@@ -232,13 +240,17 @@ I'm already running in the background! I'll notify you immediately when arbitrag
     const customPairs = this.config.trading.customPairs || [];
     const aiPairs = this.getAIRecommendations();
     
+    // Get current refresh interval (in seconds)
+    const currentInterval = (this.config.trading.checkInterval || 60000) / 1000;
+    const autoPushEnabled = this.config.trading.autoPush !== false; // default true
+    
     let pairsText = this.lang === 'zh' ? `
-📈 *监控的交易对*
+📈 *交易对修改*
 
 *🔹 基础交易对 (${basePairs.length}):*
 ${basePairs.map(p => `• ${p}`).join('\n')}
     ` : `
-📈 *Monitored Pairs*
+📈 *Modify Trading Pairs*
 
 *🔹 Base Pairs (${basePairs.length}):*
 ${basePairs.map(p => `• ${p}`).join('\n')}
@@ -271,13 +283,29 @@ ${aiPairs.map(p => `• ${p}`).join('\n')}
     pairsText += this.lang === 'zh' ? `
 
 💡 *总计: ${basePairs.length + customPairs.length + aiPairs.length} 个交易对*
+
+⚙️ *当前设置:*
+• 刷新间隔: ${currentInterval}秒
+• 自动推送: ${autoPushEnabled ? '✅ 已启用' : '❌ 已禁用'}
     ` : `
 
 💡 *Total: ${basePairs.length + customPairs.length + aiPairs.length} pairs*
+
+⚙️ *Current Settings:*
+• Refresh interval: ${currentInterval}s
+• Auto push: ${autoPushEnabled ? '✅ Enabled' : '❌ Disabled'}
     `;
     
     const keyboard = {
       inline_keyboard: [
+        [
+          { text: this.lang === 'zh' ? '➕ 添加币种' : '➕ Add Pair', callback_data: 'add_pair' },
+          { text: this.lang === 'zh' ? '➖ 删除币种' : '➖ Remove Pair', callback_data: 'remove_pair' }
+        ],
+        [
+          { text: this.lang === 'zh' ? '⏱️ 刷新间隔' : '⏱️ Refresh Interval', callback_data: 'set_interval' },
+          { text: this.lang === 'zh' ? (autoPushEnabled ? '🔕 关闭推送' : '🔔 开启推送') : (autoPushEnabled ? '🔕 Disable Push' : '🔔 Enable Push'), callback_data: 'toggle_push' }
+        ],
         [
           { text: this.lang === 'zh' ? '📊 运行状态' : '📊 Status', callback_data: 'status' },
           { text: this.lang === 'zh' ? '📝 历史记录' : '📝 History', callback_data: 'history' }
@@ -496,9 +524,11 @@ GitHub: github.com/pjl914335852-ux/openclaw-trading-scout
       this.bot.deleteMessage(chatId, messageId).catch(() => {});
       this.handleHistory({ chat: { id: chatId } });
     } else if (data === 'help') {
-      // Delete old message and send new help
-      this.bot.deleteMessage(chatId, messageId).catch(() => {});
-      this.handleHelp({ chat: { id: chatId } });
+      // Delete old message with 2-3s delay to avoid bugs
+      setTimeout(() => {
+        this.bot.deleteMessage(chatId, messageId).catch(() => {});
+        this.handleHelp({ chat: { id: chatId } });
+      }, 2500); // 2.5 seconds delay
     } else if (data === 'lang_en') {
       // Switch language and refresh current view
       this.lang = 'en';
@@ -519,6 +549,320 @@ GitHub: github.com/pjl914335852-ux/openclaw-trading-scout
       // Delete old message and send new start message in Chinese
       this.bot.deleteMessage(chatId, messageId).catch(() => {});
       this.handleStart({ chat: { id: chatId } });
+    } else if (data === 'add_pair') {
+      // Add custom pair
+      this.handleAddPair(chatId, messageId);
+    } else if (data === 'remove_pair') {
+      // Remove custom pair
+      this.handleRemovePair(chatId, messageId);
+    } else if (data === 'set_interval') {
+      // Set refresh interval
+      this.handleSetInterval(chatId, messageId);
+    } else if (data === 'toggle_push') {
+      // Toggle auto push
+      this.handleTogglePush(chatId, messageId);
+    }
+  }
+  
+  // Handle add pair
+  handleAddPair(chatId, messageId) {
+    const text = this.lang === 'zh' ? `
+➕ *添加交易对*
+
+请发送交易对名称，格式：BTCUSDT
+
+⚠️ 注意：
+• 必须是币安支持的交易对
+• 格式必须正确（大写）
+• 例如：ETHUSDT, BNBUSDT
+
+发送 /cancel 取消操作
+    ` : `
+➕ *Add Trading Pair*
+
+Please send the pair name, format: BTCUSDT
+
+⚠️ Note:
+• Must be a Binance supported pair
+• Format must be correct (uppercase)
+• Example: ETHUSDT, BNBUSDT
+
+Send /cancel to cancel
+    `;
+    
+    this.bot.deleteMessage(chatId, messageId).catch(() => {});
+    this.bot.sendMessage(chatId, text, { parse_mode: 'Markdown' });
+    
+    // Set waiting state for next message
+    this.state.waitingForPair = { chatId, action: 'add' };
+  }
+  
+  // Handle remove pair
+  handleRemovePair(chatId, messageId) {
+    const customPairs = this.config.trading.customPairs || [];
+    
+    if (customPairs.length === 0) {
+      const text = this.lang === 'zh' ? 
+        '❌ 没有自定义交易对可以删除' :
+        '❌ No custom pairs to remove';
+      
+      this.bot.answerCallbackQuery(messageId, { text, show_alert: true });
+      return;
+    }
+    
+    const text = this.lang === 'zh' ? `
+➖ *删除交易对*
+
+当前自定义交易对：
+${customPairs.map((p, i) => `${i + 1}. ${p}`).join('\n')}
+
+请发送要删除的交易对名称或编号
+
+发送 /cancel 取消操作
+    ` : `
+➖ *Remove Trading Pair*
+
+Current custom pairs:
+${customPairs.map((p, i) => `${i + 1}. ${p}`).join('\n')}
+
+Please send the pair name or number to remove
+
+Send /cancel to cancel
+    `;
+    
+    this.bot.deleteMessage(chatId, messageId).catch(() => {});
+    this.bot.sendMessage(chatId, text, { parse_mode: 'Markdown' });
+    
+    // Set waiting state for next message
+    this.state.waitingForPair = { chatId, action: 'remove' };
+  }
+  
+  // Handle set interval
+  handleSetInterval(chatId, messageId) {
+    const MIN_INTERVAL = 10; // 10 seconds minimum
+    const MAX_INTERVAL = 300; // 5 minutes maximum
+    
+    const text = this.lang === 'zh' ? `
+⏱️ *设置刷新间隔*
+
+当前间隔：${(this.config.trading.checkInterval || 60000) / 1000}秒
+
+请发送新的刷新间隔（秒）
+
+⚠️ 限制：
+• 最小：${MIN_INTERVAL}秒
+• 最大：${MAX_INTERVAL}秒
+• 推荐：30-60秒
+
+发送 /cancel 取消操作
+    ` : `
+⏱️ *Set Refresh Interval*
+
+Current interval: ${(this.config.trading.checkInterval || 60000) / 1000}s
+
+Please send the new refresh interval (seconds)
+
+⚠️ Limits:
+• Minimum: ${MIN_INTERVAL}s
+• Maximum: ${MAX_INTERVAL}s
+• Recommended: 30-60s
+
+Send /cancel to cancel
+    `;
+    
+    this.bot.deleteMessage(chatId, messageId).catch(() => {});
+    this.bot.sendMessage(chatId, text, { parse_mode: 'Markdown' });
+    
+    // Set waiting state for next message
+    this.state.waitingForInterval = { chatId };
+  }
+  
+  // Handle toggle push
+  handleTogglePush(chatId, messageId) {
+    const currentState = this.config.trading.autoPush !== false;
+    this.config.trading.autoPush = !currentState;
+    
+    // Save config (you'll need to implement this in the main file)
+    if (this.onConfigChange) {
+      this.onConfigChange(this.config);
+    }
+    
+    const text = this.lang === 'zh' ? 
+      (this.config.trading.autoPush ? '✅ 自动推送已启用' : '❌ 自动推送已禁用') :
+      (this.config.trading.autoPush ? '✅ Auto push enabled' : '❌ Auto push disabled');
+    
+    this.bot.answerCallbackQuery(messageId, { text, show_alert: false });
+    
+    // Refresh pairs view
+    this.bot.deleteMessage(chatId, messageId).catch(() => {});
+    this.handlePairs({ chat: { id: chatId } });
+  }
+  
+  // Handle text input for pair/interval
+  handleTextInput(msg) {
+    const chatId = msg.chat.id;
+    const text = msg.text?.trim();
+    
+    if (!text) return;
+    
+    // Handle add pair
+    if (this.state.waitingForPair?.action === 'add' && this.state.waitingForPair.chatId === chatId) {
+      if (text === '/cancel') {
+        delete this.state.waitingForPair;
+        this.bot.sendMessage(chatId, this.lang === 'zh' ? '❌ 已取消' : '❌ Cancelled');
+        return;
+      }
+      
+      const pair = text.toUpperCase();
+      
+      // Validate format
+      if (!/^[A-Z]{3,10}USDT$/.test(pair)) {
+        this.bot.sendMessage(chatId, this.lang === 'zh' ? 
+          '❌ 格式错误！请使用正确格式，例如：BTCUSDT' :
+          '❌ Invalid format! Please use correct format, e.g.: BTCUSDT'
+        );
+        return;
+      }
+      
+      // Add to custom pairs
+      if (!this.config.trading.customPairs) {
+        this.config.trading.customPairs = [];
+      }
+      
+      if (this.config.trading.customPairs.includes(pair)) {
+        this.bot.sendMessage(chatId, this.lang === 'zh' ? 
+          '⚠️ 该交易对已存在' :
+          '⚠️ This pair already exists'
+        );
+        return;
+      }
+      
+      this.config.trading.customPairs.push(pair);
+      
+      // Save config
+      if (this.onConfigChange) {
+        this.onConfigChange(this.config);
+      }
+      
+      delete this.state.waitingForPair;
+      
+      this.bot.sendMessage(chatId, this.lang === 'zh' ? 
+        `✅ 已添加交易对：${pair}` :
+        `✅ Added pair: ${pair}`
+      );
+      
+      // Show updated pairs
+      setTimeout(() => {
+        this.handlePairs({ chat: { id: chatId } });
+      }, 1000);
+      
+      return;
+    }
+    
+    // Handle remove pair
+    if (this.state.waitingForPair?.action === 'remove' && this.state.waitingForPair.chatId === chatId) {
+      if (text === '/cancel') {
+        delete this.state.waitingForPair;
+        this.bot.sendMessage(chatId, this.lang === 'zh' ? '❌ 已取消' : '❌ Cancelled');
+        return;
+      }
+      
+      const customPairs = this.config.trading.customPairs || [];
+      let pairToRemove = null;
+      
+      // Check if it's a number (index)
+      const index = parseInt(text);
+      if (!isNaN(index) && index > 0 && index <= customPairs.length) {
+        pairToRemove = customPairs[index - 1];
+      } else {
+        // Check if it's a pair name
+        const pair = text.toUpperCase();
+        if (customPairs.includes(pair)) {
+          pairToRemove = pair;
+        }
+      }
+      
+      if (!pairToRemove) {
+        this.bot.sendMessage(chatId, this.lang === 'zh' ? 
+          '❌ 未找到该交易对' :
+          '❌ Pair not found'
+        );
+        return;
+      }
+      
+      // Remove from custom pairs
+      this.config.trading.customPairs = customPairs.filter(p => p !== pairToRemove);
+      
+      // Save config
+      if (this.onConfigChange) {
+        this.onConfigChange(this.config);
+      }
+      
+      delete this.state.waitingForPair;
+      
+      this.bot.sendMessage(chatId, this.lang === 'zh' ? 
+        `✅ 已删除交易对：${pairToRemove}` :
+        `✅ Removed pair: ${pairToRemove}`
+      );
+      
+      // Show updated pairs
+      setTimeout(() => {
+        this.handlePairs({ chat: { id: chatId } });
+      }, 1000);
+      
+      return;
+    }
+    
+    // Handle set interval
+    if (this.state.waitingForInterval?.chatId === chatId) {
+      if (text === '/cancel') {
+        delete this.state.waitingForInterval;
+        this.bot.sendMessage(chatId, this.lang === 'zh' ? '❌ 已取消' : '❌ Cancelled');
+        return;
+      }
+      
+      const MIN_INTERVAL = 10;
+      const MAX_INTERVAL = 300;
+      
+      const interval = parseInt(text);
+      
+      if (isNaN(interval)) {
+        this.bot.sendMessage(chatId, this.lang === 'zh' ? 
+          '❌ 请输入有效的数字' :
+          '❌ Please enter a valid number'
+        );
+        return;
+      }
+      
+      if (interval < MIN_INTERVAL || interval > MAX_INTERVAL) {
+        this.bot.sendMessage(chatId, this.lang === 'zh' ? 
+          `❌ 间隔必须在 ${MIN_INTERVAL}-${MAX_INTERVAL} 秒之间` :
+          `❌ Interval must be between ${MIN_INTERVAL}-${MAX_INTERVAL} seconds`
+        );
+        return;
+      }
+      
+      // Update config
+      this.config.trading.checkInterval = interval * 1000; // Convert to ms
+      
+      // Save config
+      if (this.onConfigChange) {
+        this.onConfigChange(this.config);
+      }
+      
+      delete this.state.waitingForInterval;
+      
+      this.bot.sendMessage(chatId, this.lang === 'zh' ? 
+        `✅ 刷新间隔已设置为 ${interval} 秒` :
+        `✅ Refresh interval set to ${interval} seconds`
+      );
+      
+      // Show updated pairs
+      setTimeout(() => {
+        this.handlePairs({ chat: { id: chatId } });
+      }, 1000);
+      
+      return;
     }
   }
   

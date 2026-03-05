@@ -99,8 +99,25 @@ const state = {
 
 const MAX_HISTORY = 1000;
 
+// ==================== Config Save Function ====================
+
+function saveConfig() {
+  try {
+    fs.writeFileSync('config.json', JSON.stringify(config, null, 2), 'utf8');
+    console.log('✅ Configuration saved');
+    return true;
+  } catch (err) {
+    console.error('❌ Failed to save configuration:', err.message);
+    return false;
+  }
+}
+
 // Initialize Telegram UI
 const telegramUI = new TelegramUI(bot, config, state);
+telegramUI.onConfigChange = (newConfig) => {
+  config = newConfig;
+  saveConfig();
+};
 console.log('✅ Telegram UI initialized');
 
 // ==================== AI Agent Recommendations ====================
