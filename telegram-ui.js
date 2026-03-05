@@ -397,86 +397,109 @@ ${index + 1}. *${opp.pair1} / ${opp.pair2}*
     const chatId = msg.chat.id;
     
     const helpText = this.lang === 'zh' ? `
-❓ *帮助信息*
+❓ *帮助 & 关于我们*
+
+*🦞 关于 OpenClaw 交易侦察员*
+
+我们是一个专注于加密货币套利监控的智能助手，由 NOFX 社区精准数据支持。我们的目标是帮助交易者发现市场中的套利机会，提供实时监控和智能分析。
 
 *📋 可用命令:*
 
 /start - 开始使用
 /status - 查看运行状态
-/pairs - 查看监控的交易对
+/pairs - 管理交易对
 /history - 查看历史机会
-/lang en - 切换到英文
-/lang zh - 切换到中文
+/lang - 切换语言
 /help - 显示此帮助
 
-*🎯 功能说明:*
+*🎯 核心功能:*
 
-• *实时监控*: 我会 24/7 监控你配置的交易对
+• *实时监控*: 24/7 监控你配置的交易对
 • *套利检测*: 当价差超过阈值时立即通知
 • *风险评估*: 每个机会都有风险等级（低/中/高）
+• *智能管理*: 自定义交易对、刷新间隔、推送设置
 • *AI 推荐*: 可选的 AI 智能体推荐交易对
 
 *💡 使用提示:*
 
-1. 确保已配置 config.json
-2. 我会自动运行，无需手动操作
-3. 发现机会时会立即推送通知
-4. 使用 /status 查看运行状态
+1. 点击"交易对修改"管理监控币种
+2. 设置合适的刷新间隔（推荐 30-60 秒）
+3. 开启自动推送接收实时通知
+4. 定期查看历史记录分析机会
 
 *🔒 安全提示:*
 
 • 只使用只读 API 密钥
 • 不要分享你的 Bot Token
 • 定期检查 API 密钥权限
+• 本机器人不会要求你的私钥或密码
 
-*📞 需要帮助？*
+*📞 联系我们:*
 
 Telegram: @Ee_7t
 GitHub: github.com/pjl914335852-ux/openclaw-trading-scout
 
 💰 由 NOFX 社区精准数据支持
+🦞 OpenClaw Trading Scout v1.0
     ` : `
-❓ *Help Information*
+❓ *Help & About Us*
+
+*🦞 About OpenClaw Trading Scout*
+
+We are an intelligent assistant focused on cryptocurrency arbitrage monitoring, powered by NOFX community precision data. Our goal is to help traders discover arbitrage opportunities in the market with real-time monitoring and intelligent analysis.
 
 *📋 Available Commands:*
 
 /start - Get started
 /status - View running status
-/pairs - View monitored pairs
+/pairs - Manage trading pairs
 /history - View historical opportunities
-/lang en - Switch to English
-/lang zh - Switch to Chinese
+/lang - Switch language
 /help - Show this help
 
-*🎯 Features:*
+*🎯 Core Features:*
 
 • *Real-time Monitoring*: 24/7 monitoring of your configured pairs
 • *Arbitrage Detection*: Instant notification when spread exceeds threshold
 • *Risk Assessment*: Each opportunity has a risk level (low/medium/high)
+• *Smart Management*: Custom pairs, refresh interval, push settings
 • *AI Recommendations*: Optional AI agent recommended pairs
 
 *💡 Usage Tips:*
 
-1. Make sure config.json is configured
-2. I run automatically, no manual operation needed
-3. You'll get instant notifications when opportunities are found
-4. Use /status to check running status
+1. Click "Modify Pairs" to manage monitored coins
+2. Set appropriate refresh interval (recommended 30-60s)
+3. Enable auto push to receive real-time notifications
+4. Check history regularly to analyze opportunities
 
 *🔒 Security Tips:*
 
 • Only use read-only API keys
 • Don't share your Bot Token
 • Regularly check API key permissions
+• This bot will never ask for your private keys or passwords
 
-*📞 Need Help?*
+*📞 Contact Us:*
 
 Telegram: @Ee_7t
 GitHub: github.com/pjl914335852-ux/openclaw-trading-scout
 
 💰 Powered by NOFX Community Data
+🦞 OpenClaw Trading Scout v1.0
     `;
     
-    this.bot.sendMessage(chatId, helpText, { parse_mode: 'Markdown' });
+    const keyboard = {
+      inline_keyboard: [
+        [
+          { text: this.lang === 'zh' ? '🏠 返回主菜单' : '🏠 Back to Menu', callback_data: 'start' }
+        ]
+      ]
+    };
+    
+    this.bot.sendMessage(chatId, helpText, { 
+      parse_mode: 'Markdown',
+      reply_markup: keyboard
+    });
   }
   
   // Handle language change
@@ -551,21 +574,21 @@ GitHub: github.com/pjl914335852-ux/openclaw-trading-scout
       this.handleStart({ chat: { id: chatId } });
     } else if (data === 'add_pair') {
       // Add custom pair
-      this.handleAddPair(chatId, messageId);
+      this.handleAddPair(chatId, messageId, query.id);
     } else if (data === 'remove_pair') {
       // Remove custom pair
-      this.handleRemovePair(chatId, messageId);
+      this.handleRemovePair(chatId, messageId, query.id);
     } else if (data === 'set_interval') {
       // Set refresh interval
-      this.handleSetInterval(chatId, messageId);
+      this.handleSetInterval(chatId, messageId, query.id);
     } else if (data === 'toggle_push') {
       // Toggle auto push
-      this.handleTogglePush(chatId, messageId);
+      this.handleTogglePush(chatId, messageId, query.id);
     }
   }
   
   // Handle add pair
-  handleAddPair(chatId, messageId) {
+  handleAddPair(chatId, messageId, queryId) {
     const text = this.lang === 'zh' ? `
 ➕ *添加交易对*
 
@@ -590,15 +613,28 @@ Please send the pair name, format: BTCUSDT
 Send /cancel to cancel
     `;
     
+    this.bot.answerCallbackQuery(queryId);
     this.bot.deleteMessage(chatId, messageId).catch(() => {});
-    this.bot.sendMessage(chatId, text, { parse_mode: 'Markdown' });
+    
+    const keyboard = {
+      inline_keyboard: [
+        [
+          { text: this.lang === 'zh' ? '🔙 返回' : '🔙 Back', callback_data: 'pairs' }
+        ]
+      ]
+    };
+    
+    this.bot.sendMessage(chatId, text, { 
+      parse_mode: 'Markdown',
+      reply_markup: keyboard
+    });
     
     // Set waiting state for next message
     this.state.waitingForPair = { chatId, action: 'add' };
   }
   
   // Handle remove pair
-  handleRemovePair(chatId, messageId) {
+  handleRemovePair(chatId, messageId, queryId) {
     const customPairs = this.config.trading.customPairs || [];
     
     if (customPairs.length === 0) {
@@ -606,7 +642,7 @@ Send /cancel to cancel
         '❌ 没有自定义交易对可以删除' :
         '❌ No custom pairs to remove';
       
-      this.bot.answerCallbackQuery(messageId, { text, show_alert: true });
+      this.bot.answerCallbackQuery(queryId, { text, show_alert: true });
       return;
     }
     
@@ -630,15 +666,28 @@ Please send the pair name or number to remove
 Send /cancel to cancel
     `;
     
+    this.bot.answerCallbackQuery(queryId);
     this.bot.deleteMessage(chatId, messageId).catch(() => {});
-    this.bot.sendMessage(chatId, text, { parse_mode: 'Markdown' });
+    
+    const keyboard = {
+      inline_keyboard: [
+        [
+          { text: this.lang === 'zh' ? '🔙 返回' : '🔙 Back', callback_data: 'pairs' }
+        ]
+      ]
+    };
+    
+    this.bot.sendMessage(chatId, text, { 
+      parse_mode: 'Markdown',
+      reply_markup: keyboard
+    });
     
     // Set waiting state for next message
     this.state.waitingForPair = { chatId, action: 'remove' };
   }
   
   // Handle set interval
-  handleSetInterval(chatId, messageId) {
+  handleSetInterval(chatId, messageId, queryId) {
     const MIN_INTERVAL = 10; // 10 seconds minimum
     const MAX_INTERVAL = 300; // 5 minutes maximum
     
@@ -670,19 +719,32 @@ Please send the new refresh interval (seconds)
 Send /cancel to cancel
     `;
     
+    this.bot.answerCallbackQuery(queryId);
     this.bot.deleteMessage(chatId, messageId).catch(() => {});
-    this.bot.sendMessage(chatId, text, { parse_mode: 'Markdown' });
+    
+    const keyboard = {
+      inline_keyboard: [
+        [
+          { text: this.lang === 'zh' ? '🔙 返回' : '🔙 Back', callback_data: 'pairs' }
+        ]
+      ]
+    };
+    
+    this.bot.sendMessage(chatId, text, { 
+      parse_mode: 'Markdown',
+      reply_markup: keyboard
+    });
     
     // Set waiting state for next message
     this.state.waitingForInterval = { chatId };
   }
   
   // Handle toggle push
-  handleTogglePush(chatId, messageId) {
+  handleTogglePush(chatId, messageId, queryId) {
     const currentState = this.config.trading.autoPush !== false;
     this.config.trading.autoPush = !currentState;
     
-    // Save config (you'll need to implement this in the main file)
+    // Save config
     if (this.onConfigChange) {
       this.onConfigChange(this.config);
     }
@@ -691,9 +753,10 @@ Send /cancel to cancel
       (this.config.trading.autoPush ? '✅ 自动推送已启用' : '❌ 自动推送已禁用') :
       (this.config.trading.autoPush ? '✅ Auto push enabled' : '❌ Auto push disabled');
     
-    this.bot.answerCallbackQuery(messageId, { text, show_alert: false });
+    // Answer callback first
+    this.bot.answerCallbackQuery(queryId, { text, show_alert: false });
     
-    // Refresh pairs view
+    // Delete old message and refresh pairs view
     this.bot.deleteMessage(chatId, messageId).catch(() => {});
     this.handlePairs({ chat: { id: chatId } });
   }
