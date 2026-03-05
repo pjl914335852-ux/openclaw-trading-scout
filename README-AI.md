@@ -254,9 +254,8 @@ MIT License - 开源免费使用
 
 - [OpenClaw 官网](https://openclaw.ai)
 - [GitHub 仓库](https://github.com/pjl914335852-ux/openclaw-trading-scout)
-- [Telegram](https://t.me/Ee_7t)
 
-## 🙏 致谢
+## 🙏 鸣谢
 
 - OpenClaw 团队提供强大的 AI Agent 框架
 - Claude Opus 提供深度分析能力

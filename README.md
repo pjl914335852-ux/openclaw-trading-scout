@@ -254,13 +254,7 @@ MIT License - 开源免费使用
 - [OpenClaw Discord](https://discord.com/invite/clawd)
 - [币安 API 文档](https://cryptoex-docs.github.io/apidocs/)
 
-## 👤 作者
-
-**发财猫** 🐱
-- Telegram: [@Ee_7t](https://t.me/Ee_7t)
-- GitHub: [@your-github](https://github.com/your-github)
-
-## 🙏 致谢
+## 🙏 鸣谢
 
 - OpenClaw 团队提供强大的 AI Agent 框架
 - 币安提供优质的交易 API

@@ -250,10 +250,9 @@ MIT License - 开源免费使用
 
 - [GitHub 仓库](https://github.com/pjl914335852-ux/openclaw-trading-scout)
 - [OpenClaw 官网](https://openclaw.ai)
-- [Telegram](https://t.me/Ee_7t)
 
 ---
 
 ⭐ 如果这个项目对你有帮助，请给个 Star！
 
-**Built with ❤️ using OpenClaw + Claude Opus + NoFx**
+**Built with ❤️ using OpenClaw + Claude Opus + NOFX**
