@@ -28,6 +28,8 @@ An AI-powered trading assistant built with OpenClaw that:
 
 **OpenClaw Trading Scout** is a free, open-source cryptocurrency arbitrage monitoring tool built on the OpenClaw framework. It runs as a standalone Node.js application that monitors Binance trading pairs 24/7 and sends instant alerts via Telegram when arbitrage opportunities are detected.
 
+**Powered by NOFX Community's precise data support** - leveraging professional-grade market analysis and real-time data feeds to identify profitable opportunities that others miss.
+
 ### 💰 Completely Free - No Token Consumption
 
 **Important: This tool does NOT consume any tokens or incur any costs!**

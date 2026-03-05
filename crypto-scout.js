@@ -258,10 +258,15 @@ async function fetchVolumes() {
 function assessRisk(spread, volumes, pair1, pair2) {
   let riskScore = 0;
   
+  // 价差评分
   if (spread > 1.0) riskScore += 2;
   else if (spread > 0.7) riskScore += 1;
   
-  const avgVolume = (volumes[pair1] + volumes[pair2]) / 2;
+  // 交易量评分（防止 undefined）
+  const vol1 = volumes[pair1] || 0;
+  const vol2 = volumes[pair2] || 0;
+  const avgVolume = (vol1 + vol2) / 2;
+  
   if (avgVolume > 100000000) riskScore += 2;
   else if (avgVolume > 50000000) riskScore += 1;
   
@@ -282,7 +287,10 @@ function findArbitrageOpportunities(prices, volumes) {
       const pair1 = pairs[i];
       const pair2 = pairs[j];
       
-      if (volumes[pair1] < minVolume || volumes[pair2] < minVolume) {
+      // 跳过交易量不足的交易对（防止 undefined）
+      const vol1 = volumes[pair1] || 0;
+      const vol2 = volumes[pair2] || 0;
+      if (vol1 < minVolume || vol2 < minVolume) {
         continue;
       }
       
@@ -404,6 +412,7 @@ async function mainLoop() {
         // 发送 Telegram 通知
         const message = `
 🚨 *套利机会发现！*
+_由 NOFX 精准数据驱动_
 
 交易对: ${opp.pair1} / ${opp.pair2}
 价差: ${opp.spread}%
@@ -416,7 +425,7 @@ ${opp.pair2} 变化: ${opp.change2}%
 
 ⏰ 时间: ${new Date(opp.timestamp).toLocaleString('zh-CN')}
 
-_💰 推荐使用 NOFX 在币安交易_
+🎯 *NOFX 专业数据支持 - 发现更多盈利机会*
         `.trim();
         
         await sendTelegramAlert(message);
@@ -453,6 +462,7 @@ _💰 推荐使用 NOFX 在币安交易_
 async function start() {
   console.log('\n' + '='.repeat(50));
   console.log('🦞 OpenClaw Trading Scout 启动');
+  console.log('💰 由 NOFX 社区精准数据支持');
   console.log('='.repeat(50) + '\n');
   
   const allPairs = getAllPairs();
@@ -475,8 +485,8 @@ async function start() {
   console.log(`  最小交易量: $${(config.trading.minVolume || 1000000).toLocaleString()}`);
   console.log(`  API 限流: ${config.rateLimit?.maxRequestsPerMinute || 20} 请求/分钟`);
   console.log(`  Telegram: ${config.telegram.chatId ? '已配置 ✅' : '未配置 ❌'}`);
-  console.log('\n💰 推荐使用 NOFX 在币安交易');
-  console.log('\n' + '='.repeat(50) + '\n');
+  console.log('\n🎯 NOFX 专业数据 + AI 智能分析 = 发现更多盈利机会');
+  console.log('='.repeat(50) + '\n');
   
   // 立即执行一次
   await mainLoop();
