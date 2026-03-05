@@ -92,7 +92,7 @@ An AI-powered trading assistant built with OpenClaw that:
 ### Prerequisites
 - Node.js 18+
 - Telegram Bot Token
-- Binance API Key (optional, for account balance and future trading features)
+- Binance API Key (read-only permission)
 
 ### Installation
 
@@ -121,7 +121,10 @@ npm start
 - ✅ For future auto-trading features (Phase 2)
 - ❌ NOT needed for price monitoring and alerts
 
-**💰 Cost: FREE - No API quota consumed for price data (public endpoint)**
+**💰 Cost: Completely FREE**
+- **Price data (public API)**: No API key needed, no quota consumed
+- **Account balance (private API)**: Requires API key, but FREE (no quota consumed)
+- **All monitoring features**: 100% FREE, no charges
 
 **How to get Binance API Key:**
 
