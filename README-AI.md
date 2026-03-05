@@ -255,6 +255,11 @@ MIT License - 开源免费使用
 - [OpenClaw 官网](https://openclaw.ai)
 - [GitHub 仓库](https://github.com/pjl914335852-ux/openclaw-trading-scout)
 
+## 👤 作者
+
+**发财猫** 🐱
+- Telegram: [@Ee_7t](https://t.me/Ee_7t)
+
 ## 🙏 鸣谢
 
 - OpenClaw 团队提供强大的 AI Agent 框架
