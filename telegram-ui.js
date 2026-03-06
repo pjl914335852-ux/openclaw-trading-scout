@@ -636,8 +636,15 @@ We are an intelligent assistant focused on cryptocurrency arbitrage monitoring, 
       this.bot.deleteMessage(chatId, messageId).catch(() => {});
       this.handleHelp({ chat: { id: chatId } });
     } else if (data === 'lang_en') {
-      // Switch language and refresh current view
+      // Switch language and update config
       this.lang = 'en';
+      this.config.language = 'en';
+      
+      // Save config
+      if (this.onConfigChange) {
+        this.onConfigChange(this.config);
+      }
+      
       this.bot.answerCallbackQuery(query.id, { 
         text: '✅ Language switched to English',
         show_alert: false
@@ -646,8 +653,15 @@ We are an intelligent assistant focused on cryptocurrency arbitrage monitoring, 
       this.bot.deleteMessage(chatId, messageId).catch(() => {});
       this.handleStart({ chat: { id: chatId } });
     } else if (data === 'lang_zh') {
-      // Switch language and refresh current view
+      // Switch language and update config
       this.lang = 'zh';
+      this.config.language = 'zh';
+      
+      // Save config
+      if (this.onConfigChange) {
+        this.onConfigChange(this.config);
+      }
+      
       this.bot.answerCallbackQuery(query.id, { 
         text: '✅ 语言已切换到中文',
         show_alert: false

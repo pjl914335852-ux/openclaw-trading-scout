@@ -65,7 +65,7 @@ try {
 
 // ==================== Initialize ====================
 
-const lang = config.language || 'en';
+let lang = config.language || 'en';
 
 let bot;
 try {
@@ -121,6 +121,15 @@ function saveConfig() {
 const telegramUI = new TelegramUI(bot, config, state);
 telegramUI.onConfigChange = (newConfig) => {
   config = newConfig;
+  
+  // Update language dynamically
+  if (newConfig.language && newConfig.language !== lang) {
+    lang = newConfig.language;
+    console.log(lang === 'zh' ? 
+      `🌐 语言已切换到中文` : 
+      `🌐 Language switched to English`);
+  }
+  
   saveConfig();
 };
 console.log('✅ Telegram UI initialized');
