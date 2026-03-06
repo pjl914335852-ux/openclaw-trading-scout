@@ -240,13 +240,13 @@ Auto-detect user intent:
 
 ### Transformation
 
-**Early 2024:** This project originated from a simple idea—using open-source tools and AI technology to help ordinary people participate in cryptocurrency investment more safely. The founder is not a professional developer, but an ordinary investor concerned about family asset safety.
+**Early 2024:** This project originated from a simple idea—helping ordinary people participate in cryptocurrency investment more safely. The founder is not a professional developer, but an ordinary investor concerned about family asset safety. Initially, it was just collecting public scam coin lists and manually querying Binance API to help people around avoid pitfalls.
 
-**Mid 2024:** As more friends and family began asking cryptocurrency questions—"Can I buy Pi coin?" "Is this new coin reliable?"—the founder realized that helping ordinary people avoid traps is more important than pursuing profits. Thus began using the OpenClaw platform and existing open-source tools to build a safety assistant prototype.
+**Mid 2024:** As more friends and family began asking cryptocurrency questions—"Can I buy Pi coin?" "Is this new coin reliable?"—the founder realized that helping ordinary people avoid traps is more important than pursuing profits. Thus began attempting to automate these queries with Telegram Bot, making safety information accessible to more people.
 
-**2025:** The project positioning gradually became clear: rather than pursuing profit maximization, pursue risk minimization. By integrating Binance API, scam databases, AI translation and other existing resources, the project evolved from a simple "information query tool" to a "safety guardian assistant." Key features include scam coin identification, term translation, and safety education.
+**2025:** The project positioning gradually became clear: rather than pursuing profit maximization, pursue risk minimization. By integrating Binance API, public scam databases, simple term explanations and other resources, the project evolved from manual queries to a semi-automated "information assistant." Key features include coin safety checks, term explanations, and basic safety tips.
 
-**Early 2026:** Binance Guardian AI officially took shape. This is not a complex trading system, but a cryptocurrency guardian truly designed for ordinary people. It integrates multiple open-source projects and public APIs, allowing people without technical backgrounds to safely participate in cryptocurrency investment.
+**Early 2026:** The emergence of the OpenClaw platform made everything simple. The founder discovered that OpenClaw's AI framework could quickly integrate previously accumulated features and add more intelligent interactions. Binance Guardian AI officially took shape—this is not a complex trading system, but a cryptocurrency guardian truly designed for ordinary people. It integrates multiple public resources and APIs, allowing people without technical backgrounds to safely participate in cryptocurrency investment.
 
 ### Philosophy
 
@@ -259,14 +259,14 @@ This is not a "one-person company" commercial project, but a "one-person guardia
 
 ### Technical Note
 
-This project is mainly based on the following open-source technologies and public resources:
-- **OpenClaw** - AI assistant framework
+This project is mainly based on the following technologies and public resources:
+- **OpenClaw** (2026) - AI assistant framework that makes integration simple
 - **Binance API** - Market data and account queries (read-only permissions)
 - **Telegram Bot API** - User interaction interface
 - **Chart.js** - Data visualization
 - **Public Scam Databases** - Risk identification
 
-The founder's role is more of an "integrator" and "product designer" rather than a traditional "developer." The core value of the project lies in integrating existing technologies into a safety tool friendly to ordinary people.
+The founder's role is more of an "integrator" and "product designer" rather than a traditional "developer." 2024-2025 was mainly about manually collecting information and simple scripts; 2026 with OpenClaw truly enabled intelligence and automation. The core value of the project lies in integrating existing technologies into a safety tool friendly to ordinary people.
 
 ### Vision
 
