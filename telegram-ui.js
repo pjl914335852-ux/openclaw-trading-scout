@@ -20,14 +20,27 @@ class TelegramUI {
     this.plainTranslator = new PlainTranslator();
     this.safetyLessons = new SafetyLessons();
     
+    // 初始化价格提醒管理器
+    const PriceAlertsManager = require('./price-alerts');
+    this.priceAlerts = new PriceAlertsManager(config);
+    this.priceAlerts.onConfigChange = (cfg) => {
+      if (this.onConfigChange) {
+        this.onConfigChange(cfg);
+      }
+    };
+    
     // 守护者模式（长辈模式）
     this.guardianMode = config.guardian?.enabled !== false; // 默认开启
     
     // 密码输入状态
     this.waitingForPassword = null;
     
+    // 价格提醒输入状态
+    this.waitingForAlert = null;
+    
     this.setupErrorHandlers();
     this.setupCommands();
+    this.startPriceAlertsMonitoring();
   }
   
   setupErrorHandlers() {
@@ -269,13 +282,14 @@ Click buttons below for quick access 👇
           ],
           [
             { text: this.lang === 'zh' ? '🔔 推送开关' : '🔔 Push', callback_data: 'toggle_push' },
-            { text: this.lang === 'zh' ? '💻 系统监控' : '💻 System', callback_data: 'system' }
+            { text: this.lang === 'zh' ? '⏰ 价格提醒' : '⏰ Price Alerts', callback_data: 'price_alerts' }
           ],
           [
-            { text: this.lang === 'zh' ? '🇬🇧 English' : '🇨🇳 中文', callback_data: this.lang === 'zh' ? 'lang_en' : 'lang_zh' },
+            { text: this.lang === 'zh' ? '💻 系统监控' : '💻 System', callback_data: 'system' },
             { text: this.lang === 'zh' ? '❓ 帮助' : '❓ Help', callback_data: 'help' }
           ],
           [
+            { text: this.lang === 'zh' ? '🇬🇧 English' : '🇨🇳 中文', callback_data: this.lang === 'zh' ? 'lang_en' : 'lang_zh' },
             { text: this.lang === 'zh' ? '⚙️ 专业模式: 开启' : '⚙️ Pro Mode: ON', callback_data: 'toggle_guardian' }
           ]
         ]
@@ -1332,6 +1346,24 @@ Click buttons below to select a topic 👇
       // Specific pair trades
       const pair = data.replace('trades_', '');
       this.handleSpecificTrades(chatId, messageId, query.id, pair);
+    } else if (data === 'price_alerts') {
+      // Price alerts menu
+      this.handlePriceAlerts(chatId, messageId, query.id);
+    } else if (data === 'add_alert') {
+      // Add new alert
+      this.handleAddAlert(chatId, messageId, query.id);
+    } else if (data.startsWith('add_alert_')) {
+      // Add alert for specific type
+      const type = data.replace('add_alert_', '');
+      this.handleAddAlertType(chatId, messageId, query.id, type);
+    } else if (data.startsWith('alert_pair_')) {
+      // Select pair for alert
+      const pair = data.replace('alert_pair_', '');
+      this.handleAlertPairSelected(chatId, messageId, query.id, pair);
+    } else if (data.startsWith('remove_alert_')) {
+      // Remove alert
+      const alertId = data.replace('remove_alert_', '');
+      this.handleRemoveAlert(chatId, messageId, query.id, alertId);
     }
   }
   
@@ -2070,6 +2102,88 @@ Guardian mode remains enabled
           }, 2000);
         }
       }
+      
+      return;
+    }
+    
+    // Handle price alert input
+    if (this.waitingForAlert && this.waitingForAlert.chatId === chatId) {
+      if (text === '/cancel') {
+        delete this.waitingForAlert;
+        this.bot.sendMessage(chatId, this.lang === 'zh' ? '❌ 已取消' : '❌ Cancelled');
+        return;
+      }
+      
+      const { type, pair, currentPrice } = this.waitingForAlert;
+      delete this.waitingForAlert;
+      
+      const value = parseFloat(text);
+      
+      if (isNaN(value) || value <= 0) {
+        this.bot.sendMessage(chatId, this.lang === 'zh' ? 
+          '❌ 请输入有效的数字' :
+          '❌ Please enter a valid number'
+        );
+        return;
+      }
+      
+      // Validate value based on type
+      if (type.includes('change')) {
+        if (value > 100) {
+          this.bot.sendMessage(chatId, this.lang === 'zh' ? 
+            '❌ 百分比不能超过 100%' :
+            '❌ Percentage cannot exceed 100%'
+          );
+          return;
+        }
+      }
+      
+      // Check alert limit
+      const activeAlerts = this.priceAlerts.getActiveAlerts();
+      if (activeAlerts.length >= 10) {
+        this.bot.sendMessage(chatId, this.lang === 'zh' ? 
+          '❌ 最多只能设置 10 个提醒，请先删除一些旧提醒' :
+          '❌ Maximum 10 alerts allowed, please remove some old alerts first'
+        );
+        return;
+      }
+      
+      // Add alert
+      const alert = this.priceAlerts.addAlert({
+        pair,
+        type,
+        value,
+        currentPrice
+      });
+      
+      const typeText = this.getAlertTypeText(type);
+      const valueText = type.includes('change') ? `${value}%` : `$${value.toLocaleString()}`;
+      
+      const successText = this.lang === 'zh' ? `
+✅ *提醒添加成功！*
+
+*交易对:* ${pair}
+*提醒类型:* ${typeText}
+*设定值:* ${valueText}
+*当前价格:* $${currentPrice.toLocaleString()}
+
+⏰ 当价格达到条件时，我会立即通知你！
+
+💡 你可以在"价格提醒"菜单中查看和管理所有提醒
+      `.trim() : `
+✅ *Alert added successfully!*
+
+*Pair:* ${pair}
+*Alert Type:* ${typeText}
+*Set Value:* ${valueText}
+*Current Price:* $${currentPrice.toLocaleString()}
+
+⏰ I'll notify you immediately when price meets the condition!
+
+💡 You can view and manage all alerts in "Price Alerts" menu
+      `.trim();
+      
+      this.bot.sendMessage(chatId, successText, { parse_mode: 'Markdown' });
       
       return;
     }
@@ -3730,6 +3844,312 @@ Popular pairs:
           ]]
         }
       });
+    }
+  }
+  
+  // Start price alerts monitoring
+  startPriceAlertsMonitoring() {
+    const getPrices = async () => {
+      const prices = {};
+      const allPairs = this.getAllPairs();
+      
+      for (const pair of allPairs) {
+        const price = this.state.priceCache?.[pair];
+        if (price) {
+          prices[pair] = price;
+        }
+      }
+      
+      return prices;
+    };
+    
+    const onTrigger = (alert) => {
+      const chatId = this.config.telegram.chatId;
+      if (!chatId) return;
+      
+      const text = this.lang === 'zh' ? `
+⏰ *价格提醒触发！*
+
+*交易对:* ${alert.pair}
+*触发价格:* $${alert.triggeredPrice.toLocaleString()}
+*提醒类型:* ${this.getAlertTypeText(alert.type)}
+*设定值:* ${alert.type.includes('change') ? alert.value + '%' : '$' + alert.value.toLocaleString()}
+
+⏰ 提醒时间: ${new Date().toLocaleString('zh-CN')}
+      `.trim() : `
+⏰ *Price Alert Triggered!*
+
+*Pair:* ${alert.pair}
+*Triggered Price:* $${alert.triggeredPrice.toLocaleString()}
+*Alert Type:* ${this.getAlertTypeText(alert.type)}
+*Set Value:* ${alert.type.includes('change') ? alert.value + '%' : '$' + alert.value.toLocaleString()}
+
+⏰ Time: ${new Date().toLocaleString('en-US')}
+      `.trim();
+      
+      this.bot.sendMessage(chatId, text, { parse_mode: 'Markdown' });
+    };
+    
+    this.priceAlerts.startMonitoring(onTrigger, getPrices, 30000);
+  }
+  
+  // Get alert type text
+  getAlertTypeText(type) {
+    const typeMap = {
+      zh: {
+        above: '价格高于',
+        below: '价格低于',
+        change_up: '涨幅超过',
+        change_down: '跌幅超过'
+      },
+      en: {
+        above: 'Price above',
+        below: 'Price below',
+        change_up: 'Rise over',
+        change_down: 'Fall over'
+      }
+    };
+    
+    return typeMap[this.lang][type] || type;
+  }
+  
+  // Handle price alerts menu
+  handlePriceAlerts(chatId, messageId, queryId) {
+    this.bot.answerCallbackQuery(queryId);
+    this.bot.deleteMessage(chatId, messageId).catch(() => {});
+    
+    const alerts = this.priceAlerts.getAllAlerts();
+    const activeAlerts = alerts.filter(a => !a.triggered && a.enabled);
+    const triggeredAlerts = alerts.filter(a => a.triggered);
+    
+    let text = this.lang === 'zh' ? `
+⏰ *价格提醒*
+
+*活跃提醒 (${activeAlerts.length}):*
+${activeAlerts.length > 0 ? activeAlerts.map((a, i) => `${i + 1}. ${this.priceAlerts.formatAlert(a, this.lang)}`).join('\n') : '暂无活跃提醒'}
+
+*已触发 (${triggeredAlerts.length}):*
+${triggeredAlerts.length > 0 ? triggeredAlerts.slice(0, 3).map((a, i) => `${i + 1}. ${this.priceAlerts.formatAlert(a, this.lang)}`).join('\n') : '暂无已触发提醒'}
+
+💡 提示：
+• 提醒会在价格达到设定值时自动通知
+• 每个提醒只触发一次
+• 最多可设置 10 个提醒
+    `.trim() : `
+⏰ *Price Alerts*
+
+*Active Alerts (${activeAlerts.length}):*
+${activeAlerts.length > 0 ? activeAlerts.map((a, i) => `${i + 1}. ${this.priceAlerts.formatAlert(a, this.lang)}`).join('\n') : 'No active alerts'}
+
+*Triggered (${triggeredAlerts.length}):*
+${triggeredAlerts.length > 0 ? triggeredAlerts.slice(0, 3).map((a, i) => `${i + 1}. ${this.priceAlerts.formatAlert(a, this.lang)}`).join('\n') : 'No triggered alerts'}
+
+💡 Tips:
+• Alerts notify automatically when price reaches target
+• Each alert triggers once
+• Maximum 10 alerts
+    `.trim();
+    
+    const keyboard = {
+      inline_keyboard: [
+        [
+          { text: this.lang === 'zh' ? '➕ 添加提醒' : '➕ Add Alert', callback_data: 'add_alert' }
+        ]
+      ]
+    };
+    
+    // Add remove buttons for active alerts
+    if (activeAlerts.length > 0) {
+      const removeButtons = [];
+      activeAlerts.slice(0, 5).forEach((alert, index) => {
+        removeButtons.push([
+          { text: this.lang === 'zh' ? `🗑️ 删除提醒 ${index + 1}` : `🗑️ Remove Alert ${index + 1}`, callback_data: `remove_alert_${alert.id}` }
+        ]);
+      });
+      keyboard.inline_keyboard.push(...removeButtons);
+    }
+    
+    keyboard.inline_keyboard.push([
+      { text: this.lang === 'zh' ? '🔙 返回主菜单' : '🔙 Back to Menu', callback_data: 'start' }
+    ]);
+    
+    this.bot.sendMessage(chatId, text, {
+      parse_mode: 'Markdown',
+      reply_markup: keyboard
+    });
+  }
+  
+  // Handle add alert
+  handleAddAlert(chatId, messageId, queryId) {
+    this.bot.answerCallbackQuery(queryId);
+    this.bot.deleteMessage(chatId, messageId).catch(() => {});
+    
+    const text = this.lang === 'zh' ? `
+➕ *添加价格提醒*
+
+请选择提醒类型：
+
+*价格提醒*
+• 价格高于 - 当价格超过设定值时提醒
+• 价格低于 - 当价格低于设定值时提醒
+
+*涨跌幅提醒*
+• 涨幅超过 - 当涨幅超过设定百分比时提醒
+• 跌幅超过 - 当跌幅超过设定百分比时提醒
+
+💡 提示：涨跌幅是相对于添加提醒时的价格计算
+    `.trim() : `
+➕ *Add Price Alert*
+
+Please select alert type:
+
+*Price Alerts*
+• Price Above - Alert when price exceeds target
+• Price Below - Alert when price falls below target
+
+*Change Alerts*
+• Rise Over - Alert when rise exceeds percentage
+• Fall Over - Alert when fall exceeds percentage
+
+💡 Tip: Change is calculated from price when alert is added
+    `.trim();
+    
+    const keyboard = {
+      inline_keyboard: [
+        [
+          { text: this.lang === 'zh' ? '📈 价格高于' : '📈 Price Above', callback_data: 'add_alert_above' },
+          { text: this.lang === 'zh' ? '📉 价格低于' : '📉 Price Below', callback_data: 'add_alert_below' }
+        ],
+        [
+          { text: this.lang === 'zh' ? '🚀 涨幅超过' : '🚀 Rise Over', callback_data: 'add_alert_change_up' },
+          { text: this.lang === 'zh' ? '💥 跌幅超过' : '💥 Fall Over', callback_data: 'add_alert_change_down' }
+        ],
+        [
+          { text: this.lang === 'zh' ? '🔙 返回' : '🔙 Back', callback_data: 'price_alerts' }
+        ]
+      ]
+    };
+    
+    this.bot.sendMessage(chatId, text, {
+      parse_mode: 'Markdown',
+      reply_markup: keyboard
+    });
+  }
+  
+  // Handle add alert type
+  handleAddAlertType(chatId, messageId, queryId, type) {
+    this.bot.answerCallbackQuery(queryId);
+    this.bot.deleteMessage(chatId, messageId).catch(() => {});
+    
+    const typeText = this.getAlertTypeText(type);
+    
+    const text = this.lang === 'zh' ? `
+➕ *添加提醒: ${typeText}*
+
+请选择交易对：
+    `.trim() : `
+➕ *Add Alert: ${typeText}*
+
+Please select pair:
+    `.trim();
+    
+    const allPairs = this.getAllPairs();
+    const keyboard = {
+      inline_keyboard: []
+    };
+    
+    // Add pair buttons (2 per row)
+    for (let i = 0; i < allPairs.length; i += 2) {
+      const row = [];
+      row.push({ text: allPairs[i], callback_data: `alert_pair_${allPairs[i]}` });
+      if (i + 1 < allPairs.length) {
+        row.push({ text: allPairs[i + 1], callback_data: `alert_pair_${allPairs[i + 1]}` });
+      }
+      keyboard.inline_keyboard.push(row);
+    }
+    
+    keyboard.inline_keyboard.push([
+      { text: this.lang === 'zh' ? '🔙 返回' : '🔙 Back', callback_data: 'add_alert' }
+    ]);
+    
+    // Store alert type in waiting state
+    this.waitingForAlert = { type, chatId };
+    
+    this.bot.sendMessage(chatId, text, {
+      parse_mode: 'Markdown',
+      reply_markup: keyboard
+    });
+  }
+  
+  // Handle alert pair selected
+  handleAlertPairSelected(chatId, messageId, queryId, pair) {
+    this.bot.answerCallbackQuery(queryId);
+    this.bot.deleteMessage(chatId, messageId).catch(() => {});
+    
+    if (!this.waitingForAlert) {
+      this.bot.sendMessage(chatId, this.lang === 'zh' ? '❌ 会话已过期，请重新开始' : '❌ Session expired, please start again');
+      return;
+    }
+    
+    const { type } = this.waitingForAlert;
+    const typeText = this.getAlertTypeText(type);
+    const currentPrice = this.state.priceCache?.[pair] || 0;
+    
+    const text = this.lang === 'zh' ? `
+➕ *添加提醒*
+
+*交易对:* ${pair}
+*当前价格:* $${currentPrice.toLocaleString()}
+*提醒类型:* ${typeText}
+
+请输入${type.includes('change') ? '百分比' : '价格'}值：
+
+${type.includes('change') ? 
+  '例如：输入 5 表示涨跌幅超过 5%' :
+  `例如：输入 ${(currentPrice * 1.05).toFixed(0)} 表示价格${type === 'above' ? '高于' : '低于'} $${(currentPrice * 1.05).toLocaleString()}`
+}
+
+发送 /cancel 取消操作
+    `.trim() : `
+➕ *Add Alert*
+
+*Pair:* ${pair}
+*Current Price:* $${currentPrice.toLocaleString()}
+*Alert Type:* ${typeText}
+
+Please enter ${type.includes('change') ? 'percentage' : 'price'} value:
+
+${type.includes('change') ? 
+  'Example: Enter 5 for 5% change' :
+  `Example: Enter ${(currentPrice * 1.05).toFixed(0)} for price ${type === 'above' ? 'above' : 'below'} $${(currentPrice * 1.05).toLocaleString()}`
+}
+
+Send /cancel to cancel
+    `.trim();
+    
+    // Update waiting state
+    this.waitingForAlert = { type, pair, currentPrice, chatId };
+    
+    this.bot.sendMessage(chatId, text, { parse_mode: 'Markdown' });
+  }
+  
+  // Handle remove alert
+  handleRemoveAlert(chatId, messageId, queryId, alertId) {
+    this.bot.answerCallbackQuery(queryId);
+    this.bot.deleteMessage(chatId, messageId).catch(() => {});
+    
+    const success = this.priceAlerts.removeAlert(alertId);
+    
+    if (success) {
+      const text = this.lang === 'zh' ? '✅ 提醒已删除' : '✅ Alert removed';
+      this.bot.sendMessage(chatId, text).then(() => {
+        setTimeout(() => {
+          this.handlePriceAlerts(chatId, null, queryId);
+        }, 500);
+      });
+    } else {
+      const text = this.lang === 'zh' ? '❌ 删除失败，提醒不存在' : '❌ Failed to remove, alert not found';
+      this.bot.sendMessage(chatId, text);
     }
   }
   
