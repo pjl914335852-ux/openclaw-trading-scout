@@ -1,458 +1,662 @@
-# OpenClaw Trading Scout 🦞
+# Binance Guardian AI 🛡️
 
-> Let AI Monitor the Market for You - 24/7 Automated Binance Trading Opportunity Detection
+> 让加密货币投资更安全 - 为新手和长辈设计的 AI 安全助手
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
 [![OpenClaw](https://img.shields.io/badge/OpenClaw-Powered-blue.svg)](https://openclaw.ai)
 [![Version](https://img.shields.io/badge/version-2.5.0-brightgreen.svg)](https://github.com/pjl914335852-ux/openclaw-trading-scout/releases)
+[![Binance](https://img.shields.io/badge/Binance-Ecosystem-F0B90B.svg)](https://www.binance.com)
 
-[中文文档](./README.zh-CN.md) | [AI Enhanced Version](./README-AI.md) | [Pro Version](./README-PRO.md) | [Changelog](./CHANGELOG.md)
-
----
-
-## 🎯 What is Trading Scout?
-
-An AI-powered trading assistant built with OpenClaw that:
-- 📊 **Real-time Monitoring** - Tracks multiple Binance trading pairs (BTC/ETH/BNB/SOL)
-- 🎯 **Smart Detection** - Identifies arbitrage opportunities (spread > 0.5%)
-- 📱 **Instant Alerts** - Sends trading signals via Telegram Bot
-- 📈 **Historical Analysis** - Statistics and performance tracking
-- 💓 **Heartbeat Reports** - Status updates every 2 hours
-- 💰 **NOFX Integration** - Professional market data and signal quality scoring
-
-**The Problem**: Crypto markets run 24/7, but humans need sleep.
-
-**The Solution**: Let AI be your eyes on the market.
+[English](./README.en.md) | [中文文档](./README.zh-CN.md) | [更新日志](./CHANGELOG.md)
 
 ---
 
-## 🦞 What is Trading Scout?
+## 🎯 为什么需要 Binance Guardian？
 
-**OpenClaw Trading Scout** is a free, open-source cryptocurrency arbitrage monitoring tool built on the OpenClaw framework. It runs as a standalone Node.js application that monitors Binance trading pairs 24/7 and sends instant alerts via Telegram when arbitrage opportunities are detected.
+### 真实场景
 
-**Powered by NOFX Community's precise data support** - leveraging professional-grade market analysis and real-time data feeds to identify profitable opportunities that others miss.
+**场景 1：妈妈问你**
+> "儿子，我朋友说 Pi 币要上币安了，让我赶紧买，是真的吗？"
 
-### 💰 Completely Free - No Token Consumption
+**场景 2：新手困惑**
+> "币安 Launchpool 是什么？会不会亏钱？"
 
-**Important: This tool does NOT consume any tokens or incur any costs!**
+**场景 3：投资焦虑**
+> "我的币跌了 20%，要不要卖？"
 
-- ✅ **No AI API calls** - Pure data monitoring, no Claude/OpenAI/GPT usage
-- ✅ **No Binance fees** - Uses free public API endpoints
-- ✅ **No Telegram fees** - Bot API is completely free
-- ✅ **No hidden costs** - 100% free to run 24/7
+### 我们的解决方案
 
-### 📊 About Binance API Costs
+**Binance Guardian AI** 是一个专为加密货币新手和长辈设计的 AI 安全助手，基于 OpenClaw 框架开发。它能：
 
-**Q: Does using Binance data consume tokens or cost money?**
-
-**A: No! Completely FREE!**
-
-**Public Data (No API Key Required):**
-- Price data (`/api/v3/ticker/price`) - ✅ FREE
-- 24h ticker (`/api/v3/ticker/24hr`) - ✅ FREE
-- Kline/candlestick data - ✅ FREE
-- Order book depth - ✅ FREE
-
-**Private Data (Read-Only API Key Required):**
-- Account balance (`/api/v3/account`) - ✅ FREE
-- Order history - ✅ FREE
-- Trade history - ✅ FREE
-
-**What are the limits?**
-- Not "token consumption" but "rate limiting" (anti-abuse)
-- Binance allows up to 1,200 requests/minute
-- Our tool uses only ~20 requests/minute (very conservative)
-- This is a speed limit, not a cost - like a free highway with a speed limit
-
-**Cost Breakdown:**
-
-| Service | Cost | Notes |
-|---------|------|-------|
-| Binance Price Data | ✅ FREE | Public API, no key needed |
-| Binance Volume Data | ✅ FREE | Public API, no key needed |
-| Binance Account Balance | ✅ FREE | Requires read-only API key |
-| Telegram Notifications | ✅ FREE | Bot API is free |
-| Server Hosting | ✅ FREE | Your own server |
-
-**Total Cost: $0/day = $0/month = $0/year**
-
-### 🎯 Key Features
-
-### 1. Multi-Pair Monitoring
-- Simultaneous tracking of multiple trading pairs
-- **Configurable update interval** (minimum 10s, recommended 30s)
-- Real-time price updates with intelligent caching
-- Volume and volatility analysis
-
-### 2. 🔧 Custom Token Monitoring
-- **Add up to 4 custom trading pairs** of your choice
-- Monitor specific tokens you're interested in
-- Flexible configuration for different strategies
-- Perfect for tracking niche or emerging tokens
-
-### 3. 🤖 AI Agent Recommendations
-- **AI-powered token selection** across different categories:
-  - `trending` - Top market cap coins (BTC, ETH, BNB, SOL)
-  - `defi` - DeFi ecosystem (UNI, AAVE, LINK, MKR)
-  - `layer2` - Layer 2 solutions (MATIC, ARB, OP)
-  - `meme` - Meme coins (DOGE, SHIB, PEPE)
-- Automatically includes recommended pairs in monitoring
-- Easy category switching via configuration
-
-### 4. Arbitrage Detection
-- Cross-pair spread analysis
-- Configurable threshold (default 0.5%)
-- Risk-adjusted opportunity scoring
-- Smart filtering by volume and liquidity
-
-### 5. 🛡️ API Rate Limiting Protection
-- **Intelligent request throttling** (default 20 req/min)
-- **Separate update intervals** for price and volume data
-- **Smart caching** to minimize API calls
-- **Prevents IP bans** from exchange
-- Configurable limits for different use cases
-
-### 6. Position Management 🆕
-- **Smart Position Sizing** - Auto-calculate position size based on balance and risk
-- **Max Positions Control** - Limit concurrent positions (default: 3)
-- **Position Tracking** - Real-time monitoring of all open positions
-- **Historical Records** - Complete trade history with P&L
-
-### 7. Risk Control 🆕
-- **Stop Loss** - Automatic stop loss at 2% (configurable)
-- **Take Profit** - Automatic take profit at 5% (configurable)
-- **Trailing Stop** - Dynamic stop loss that follows price (1.5%)
-- **Risk Assessment** - Evaluate opportunity risk level (low/medium/high)
-
-### 8. Order Tracking 🆕
-- **Real-time Monitoring** - Check positions every 5 seconds
-- **Auto Execution** - Trigger stop loss/take profit automatically
-- **P&L Calculation** - Real-time unrealized and realized P&L
-- **Trade Duration** - Track how long each position is held
-
-### 9. Telegram Integration
-- Instant push notifications
-- Trading signal details with risk levels
-- Position updates and alerts
-- **NOFX trading recommendation** included in alerts
-- Historical performance stats
+- 🛡️ **识别骗局** - 自动识别非币安上线的诈骗币（如 Pi 币）
+- 🗣️ **人话翻译** - 把专业术语翻译成大白话
+- 📚 **安全教育** - 每日一课，学习加密货币知识
+- 💼 **资产守护** - 实时监控账户安全
+- 🔔 **风险预警** - 市场异动及时提醒
 
 ---
 
-## 🚀 Quick Start
+## 🌟 核心价值
 
-### Prerequisites
-- Node.js 18+
-- Telegram Bot Token
-- Binance API Key (read-only permission)
+### 对币安生态的价值
 
-### Installation
+1. **降低用户教育成本**
+   - 新手友好的交互方式
+   - 降低客服压力
+   - 提升用户留存率
+
+2. **提升平台安全性**
+   - 识别诈骗币，保护用户资产
+   - 减少用户因误操作造成的损失
+   - 增强用户对币安的信任
+
+3. **扩大用户群体**
+   - 吸引非技术背景用户
+   - 帮助长辈安全进入加密世界
+   - 破圈到更广泛的人群
+
+### 对用户的价值
+
+- ✅ **100% 安全** - 只读权限，不接触私钥
+- ✅ **完全免费** - 无需任何费用
+- ✅ **极简交互** - 语音问答，像聊天一样简单
+- ✅ **实时守护** - 24/7 监控，及时预警
+
+---
+
+## 🚀 核心功能
+
+### 1. 🛡️ 骗局识别（长辈守护模式）
+
+**功能：** 自动识别非币安上线的诈骗币
+
+**示例对话：**
+
+```
+👤 用户: "Pi 币要上币安了吗？"
+
+🤖 Guardian: "妈，Pi 币目前还没有在币安上线。
+              网上很多人说要上线，但都是假消息。
+              
+              ⚠️ 如果有人让你买 Pi 币，要小心：
+              1. 币安官网查不到的币，不要买
+              2. 让你转账到私人账户的，是骗子
+              3. 承诺高回报的，都是陷阱
+              
+              💡 安全建议：
+              只在币安官方 App 买币，其他渠道都不安全。"
+```
+
+**技术实现：**
+- 实时同步币安上线币种列表
+- 对比用户询问的币种
+- 自动标记风险等级
+- 提供安全建议
+
+### 2. 🗣️ 人话翻译机
+
+**功能：** 把专业术语翻译成大白话
+
+**示例对话：**
+
+```
+👤 用户: "Launchpool 是什么？"
+
+🤖 Guardian: "妈，Launchpool 就像银行的定期存款送礼品活动：
+              
+              📝 简单理解：
+              1. 你把闲钱（BNB 或 USDT）存进去
+              2. 本金不动，随时可以取出
+              3. 每天送你一些新币作为奖励
+              
+              💰 举例：
+              存 100 USDT，7 天后：
+              - 本金还是 100 USDT（不会少）
+              - 额外得到一些新币（白送的）
+              
+              ✅ 安全性：很安全，本金不会亏
+              ⏰ 时间：通常 7-30 天
+              
+              想参加的话，我可以教你怎么操作。"
+```
+
+**支持翻译的术语：**
+- Launchpool / Launchpad
+- Staking / 质押
+- Spot / Futures / 现货 / 合约
+- Market Order / Limit Order
+- Stop Loss / Take Profit
+- 等 50+ 常见术语
+
+### 3. 📚 每日安全课堂
+
+**功能：** 每天推送一个安全知识点
+
+**示例内容：**
+
+```
+📚 今日安全课堂 (第 1 课)
+
+主题：如何识别诈骗币？
+
+🚨 三大特征：
+1. 承诺高回报（"一个月翻 10 倍"）
+2. 让你拉人头（"推荐 3 个人送币"）
+3. 不在币安上线（"私下交易更便宜"）
+
+✅ 安全原则：
+- 只在币安官方 App 交易
+- 不相信私聊推荐
+- 不转账到私人账户
+
+💡 记住：天上不会掉馅饼，高回报必有高风险。
+
+明天的课程：如何设置安全的密码
+```
+
+**课程体系：**
+- 第 1-7 天：基础安全知识
+- 第 8-14 天：交易基础
+- 第 15-21 天：风险管理
+- 第 22-30 天：进阶技巧
+
+### 4. 💼 资产安全检查
+
+**功能：** 实时监控账户，发现异常及时预警
+
+**检查项目：**
+- ✅ 账户余额变动
+- ✅ 异常交易行为
+- ✅ API 权限检查
+- ✅ 登录设备监控
+
+**预警示例：**
+
+```
+⚠️ 安全预警
+
+检测到您的账户有异常活动：
+
+🔍 异常详情：
+- 时间：2026-03-06 22:30
+- 行为：尝试提币到未知地址
+- 金额：500 USDT
+
+🛡️ 已自动采取的措施：
+- 暂停提币功能
+- 发送验证码到手机
+
+💡 建议操作：
+1. 立即修改密码
+2. 检查 API 密钥
+3. 联系币安客服
+
+如果不是您本人操作，请立即冻结账户。
+```
+
+### 5. 🔔 市场异动提醒
+
+**功能：** 监控市场，发现异常波动及时提醒
+
+**提醒场景：**
+- 📈 持仓币种大涨/大跌（>10%）
+- 🔥 新币上线（Launchpad/Launchpool）
+- ⚠️ 市场恐慌（BTC 暴跌）
+- 💡 套利机会（跨交易所价差）
+
+**提醒示例：**
+
+```
+🔔 市场提醒
+
+您持有的 BTC 在过去 1 小时下跌了 12%
+
+📊 当前情况：
+- 当前价格：$68,500
+- 1小时前：$77,800
+- 跌幅：-12%
+
+🤔 要不要卖？
+
+💡 建议：
+- 如果是长期投资，不用慌，比特币经常波动
+- 如果是短期交易，可以考虑止损
+- 如果不确定，可以先卖一半
+
+📚 延伸阅读：什么是止损？为什么要止损？
+
+需要帮助吗？回复"帮我分析"获取详细建议。
+```
+
+### 6. 🎤 语音交互（长辈友好）
+
+**功能：** 支持语音问答，不用打字
+
+**使用方式：**
+1. 按住语音按钮说话
+2. AI 自动识别并回答
+3. 答案也可以用语音播放
+
+**示例场景：**
+
+```
+👤 用户: [语音] "我的比特币现在多少钱？"
+
+🤖 Guardian: [语音回复]
+"您好，您的比特币现在价值 68,500 美元，
+ 比昨天下跌了 12%。
+ 
+ 您一共有 0.5 个比特币，
+ 现在总价值是 34,250 美元。
+ 
+ 需要我帮您分析一下吗？"
+```
+
+**语音优势：**
+- 👴 长辈不用打字
+- 🚗 开车时也能用
+- 👀 不用盯着屏幕
+- 🌙 晚上不用开灯
+
+---
+
+## 📱 使用方式
+
+### 极简交互流程
+
+```
+1. 打开 Telegram
+   ↓
+2. 找到 Binance Guardian Bot
+   ↓
+3. 点击"开始"
+   ↓
+4. 选择模式：
+   - 🛡️ 长辈模式（推荐新手）
+   - 📊 专业模式（适合老手）
+   ↓
+5. 开始提问或接收提醒
+```
+
+### 常用命令
+
+**长辈模式：**
+- 💬 直接说话 - "Pi 币能买吗？"
+- 🎤 语音提问 - 按住说话
+- 📚 每日一课 - 自动推送
+- 💼 查看资产 - "我有多少钱？"
+
+**专业模式：**
+- `/start` - 打开主菜单
+- `/account` - 查看账户
+- `/market` - 市场概览
+- `/alert` - 设置提醒
+- `/help` - 帮助文档
+
+---
+
+## 🔒 安全保障
+
+### 1. 只读权限
+
+```
+✅ 可以做的：
+- 查看账户余额
+- 查看交易记录
+- 查看市场数据
+
+❌ 不能做的：
+- 不能下单交易
+- 不能提币转账
+- 不能修改设置
+```
+
+### 2. 数据加密
+
+- 🔐 API 密钥加密存储
+- 🔐 通信全程 HTTPS
+- 🔐 不保存敏感信息
+
+### 3. 开源透明
+
+- 📖 代码完全开源
+- 🔍 任何人都可以审计
+- 🛡️ 社区共同维护
+
+---
+
+## 🎯 适用人群
+
+### 1. 加密货币新手
+
+**痛点：**
+- 专业术语看不懂
+- 不知道怎么操作
+- 担心被骗
+
+**解决方案：**
+- 人话翻译
+- 手把手教学
+- 骗局识别
+
+### 2. 长辈用户
+
+**痛点：**
+- 不会打字
+- 看不清屏幕
+- 容易被骗
+
+**解决方案：**
+- 语音交互
+- 大字体显示
+- 安全守护
+
+### 3. 忙碌的投资者
+
+**痛点：**
+- 没时间盯盘
+- 错过重要信息
+- 决策困难
+
+**解决方案：**
+- 24/7 监控
+- 及时提醒
+- AI 建议
+
+---
+
+## 💡 技术特点
+
+### 1. 基于 OpenClaw 框架
+
+- 🤖 强大的 AI 能力
+- 🗣️ 自然语言理解
+- 🎤 语音识别/合成
+- 📊 数据分析能力
+
+### 2. 专业数据支持
+
+- 📈 NOFX 社区数据
+- 🔥 AI500 热点币评分
+- 📊 实时市场数据
+- 🎯 智能过滤算法
+
+### 3. 完全免费
+
+| 服务 | 费用 | 说明 |
+|------|------|------|
+| 币安数据 | ✅ 免费 | 公开 API |
+| Telegram 通知 | ✅ 免费 | Bot API |
+| AI 分析 | ✅ 免费 | 本地运行 |
+| 服务器 | ✅ 免费 | 自己的服务器 |
+
+**总成本：$0/天 = $0/月 = $0/年**
+
+---
+
+## 🚀 快速开始
+
+### 1. 安装
 
 ```bash
-# Clone repository
-git clone https://github.com/pjl914335852-ux/openclaw-trading-scout
+# 克隆仓库
+git clone https://github.com/pjl914335852-ux/openclaw-trading-scout.git
 cd openclaw-trading-scout
 
-# Install dependencies
+# 安装依赖
 npm install
 
-# Configure (edit config.json)
+# 配置
 cp config.example.json config.json
-
-# Run demo
-npm test
-
-# Start monitoring
-npm start
+nano config.json
 ```
 
-### API Key Setup (Optional)
-
-**When do you need it?**
-- ✅ To view your account balance
-- ✅ For future auto-trading features (Phase 2)
-- ❌ NOT needed for price monitoring and alerts
-
-**💰 Cost: Completely FREE**
-- **Price data (public API)**: No API key needed, no quota consumed
-- **Account balance (private API)**: Requires API key, but FREE (no quota consumed)
-- **All monitoring features**: 100% FREE, no charges
-
-**How to get Binance API Key:**
-
-1. Log in to [Binance](https://www.binance.com)
-2. Go to Profile → API Management
-3. Create a new API Key
-4. **🔒 CRITICAL Security Settings:**
-   - ✅ **Enable "Enable Reading" ONLY** (this is all you need)
-   - ❌ **Disable "Enable Spot & Margin Trading"** (keep it OFF for safety)
-   - ❌ **Disable "Enable Futures"** (keep it OFF)
-   - ❌ **Disable "Enable Withdrawals"** (NEVER enable this)
-   - ✅ **Restrict access to trusted IPs** (highly recommended)
-
-5. Copy API Key and Secret Key
-6. Add to `config.json`:
+### 2. 配置
 
 ```json
 {
-  "cryptoex": {
-    "apiKey": "your_api_key_here",
-    "apiSecret": "your_secret_key_here",
-    "testnet": false
-  }
-}
-```
-
-**🛡️ Security Best Practices:**
-- 🔒 **Only enable "Enable Reading" permission** - this prevents any trading or withdrawals
-- 🔒 Never share your API Secret with anyone
-- 🔒 Use IP whitelist to restrict access to your server only
-- 🔒 Start with testnet first (`"testnet": true`) to test safely
-- 🔒 Regularly rotate your API keys (every 3-6 months)
-
-**Why "Enable Reading" is enough:**
-- ✅ Can check account balance
-- ✅ Can view order history
-- ✅ Can monitor positions
-- ❌ Cannot place trades (safe!)
-- ❌ Cannot withdraw funds (safe!)
-- ❌ Cannot transfer assets (safe!)
-
----
-
-## 📊 How It Works
-
-### Architecture
-
-```
-CryptoExchange API → Trading Scout (OpenClaw) → Telegram Bot
-    ↓                    ↓                         ↓
-Price Data         Arbitrage Analysis        Push Notifications
-```
-
-### Detection Algorithm
-
-```javascript
-// Simplified arbitrage detection
-function findArbitrageOpportunities(prices, volumes) {
-  const opportunities = [];
-  
-  // Compare all trading pair combinations
-  for (let i = 0; i < pairs.length; i++) {
-    for (let j = i + 1; j < pairs.length; j++) {
-      // Calculate price change rates
-      const change1 = (prices[pair1] - priceCache[pair1]) / priceCache[pair1] * 100;
-      const change2 = (prices[pair2] - priceCache[pair2]) / priceCache[pair2] * 100;
-      const spread = Math.abs(change1 - change2);
-      
-      // Alert if spread exceeds threshold
-      if (spread > threshold) {
-        opportunities.push({
-          pair1, pair2, spread,
-          suggestion: change1 > change2 
-            ? `Buy ${pair2}, Sell ${pair1}` 
-            : `Buy ${pair1}, Sell ${pair2}`
-        });
-      }
-    }
-  }
-  
-  return opportunities;
-}
-```
-
----
-
-## 📱 Example Output
-
-### Basic Monitoring
-```
-🦞 Trading Scout Checking...
-
-📊 Current Prices:
-  BTCUSDT: $96,513.89
-  ETHUSDT: $2,857.98
-  BNBUSDT: $623.23
-
-💰 Account Balance:
-  USDT: 1000.00 (Available: 900.00)
-  BTC: 0.0103 (Available: 0.0103)
-
-📈 Active Positions:
-  BTCUSDT: 0.01 @ $96,000 (+0.53%)
-    Stop Loss: $94,080 | Take Profit: $100,800
-
-🎯 Arbitrage Opportunity Found:
-  BNBUSDT / ETHUSDT
-  Spread: 0.62% | Risk: medium
-  Suggestion: Buy ETHUSDT, Sell BNBUSDT
-
-✅ Telegram notification sent
-```
-
-### Position Closed
-```
-🔔 Position Closed
-
-Pair: BTCUSDT
-Entry: $96,000
-Exit: $100,800
-P&L: +5.00% ($48.00)
-Reason: Take Profit
-Duration: 2h 35m
-```
-
----
-
-## ⚙️ Configuration
-
-Edit `config.json`:
-
-```json
-{
-  "cryptoex": {
-    "apiKey": "YOUR_API_KEY",        // Optional: for balance check
-    "apiSecret": "YOUR_API_SECRET",  // Optional: for balance check
-    "testnet": true                  // Use testnet for safety
-  },
   "telegram": {
-    "botToken": "YOUR_BOT_TOKEN",
-    "chatId": "YOUR_CHAT_ID"
+    "botToken": "你的 Telegram Bot Token",
+    "chatId": "你的 Chat ID"
   },
-  "trading": {
-    "pairs": ["BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT"],
-    "threshold": 0.5,
-    "checkInterval": 30000,
-    "minVolume": 1000000,
-    
-    // Risk Control
-    "stopLoss": 2.0,        // 2% stop loss
-    "takeProfit": 5.0,      // 5% take profit
-    "trailingStop": 1.5,    // 1.5% trailing stop
-    
-    // Position Management
-    "maxPositions": 3,      // Max 3 concurrent positions
-    "maxPositionSize": 0.1, // Max 10% of balance per position
-    "minPositionSize": 0.02 // Min 2% of balance per position
-  }
+  "binance": {
+    "apiKey": "你的币安 API Key（只读）",
+    "apiSecret": "你的币安 API Secret"
+  },
+  "mode": "guardian",  // guardian 或 professional
+  "language": "zh"     // zh 或 en
 }
 ```
 
-### Configuration Guide
+### 3. 运行
 
-**Binance API (Optional):**
-- Leave empty (`""`) if you only want price monitoring
-- Required for:
-  - Account balance display
-  - Future auto-trading features
-- Get from: Binance → Profile → API Management
+```bash
+# 启动服务
+npm start
 
-**Telegram (Required):**
-- `botToken`: Get from @BotFather on Telegram
-- `chatId`: Get from @userinfobot on Telegram
+# 或使用 systemd（推荐）
+sudo systemctl start binance-guardian
+```
 
-**Risk Control:**
-- `stopLoss`: Percentage loss to trigger automatic exit
-- `takeProfit`: Percentage gain to trigger automatic exit
-- `trailingStop`: Dynamic stop loss that follows price
+### 4. 使用
 
-**Position Management:**
-- `maxPositions`: Maximum number of concurrent positions
-- `maxPositionSize`: Maximum percentage of balance per position
-- `minPositionSize`: Minimum percentage of balance per position
-
-**Safety First:**
-- Always start with `testnet: true`
-- Test thoroughly before using real funds
-- Start with small position sizes
+1. 打开 Telegram
+2. 搜索你的 Bot
+3. 点击"开始"
+4. 选择"长辈模式"
+5. 开始提问！
 
 ---
 
-## 🎓 Use Cases
+## 📊 功能对比
 
-### For Beginners
-- Learn market dynamics
-- Understand arbitrage opportunities
-- Practice risk management
-
-### For Traders
-- 24/7 market monitoring
-- Never miss opportunities
-- Reduce emotional trading
-
-### For Developers
-- OpenClaw integration example
-- Trading bot architecture reference
-- Extensible strategy framework
+| 功能 | 长辈模式 | 专业模式 |
+|------|---------|---------|
+| 语音交互 | ✅ | ✅ |
+| 人话翻译 | ✅ | ❌ |
+| 骗局识别 | ✅ | ✅ |
+| 每日课堂 | ✅ | ❌ |
+| 资产监控 | ✅ | ✅ |
+| 市场提醒 | ✅ | ✅ |
+| 套利监控 | ❌ | ✅ |
+| AI500 排行 | ❌ | ✅ |
+| 技术指标 | ❌ | ✅ |
 
 ---
 
-## 🛠️ Tech Stack
+## 🎓 使用案例
 
-- **Framework**: OpenClaw AI Agent
-- **Runtime**: Node.js 18+
-- **APIs**: Binance/CryptoExchange, Telegram
-- **Data**: Real-time price feeds
-- **Deployment**: Local/Cloud/Docker
+### 案例 1：帮妈妈识别 Pi 币骗局
+
+**背景：** 妈妈的朋友说 Pi 币要上币安了，让她赶紧买。
+
+**使用 Guardian：**
+
+```
+👤 妈妈: "Pi 币是什么？能买吗？"
+
+🤖 Guardian: "妈，Pi 币目前还没有在币安上线。
+              
+              ⚠️ 这是一个常见的骗局：
+              1. Pi 币从 2019 年就说要上线，到现在还没上
+              2. 很多骗子冒充 Pi 币官方，让人转账
+              3. 币安官网查不到的币，都不要买
+              
+              💡 如果有人让你买 Pi 币：
+              - 让你转账到私人账户 → 100% 骗子
+              - 说"内部渠道"可以买 → 100% 骗子
+              - 承诺高回报 → 100% 骗子
+              
+              安全建议：只在币安官方 App 买币。"
+```
+
+**结果：** 妈妈没有上当，避免了损失。
+
+### 案例 2：帮新手理解 Launchpool
+
+**背景：** 新手看到 Launchpool 活动，不知道是什么。
+
+**使用 Guardian：**
+
+```
+👤 新手: "Launchpool 是什么？会不会亏钱？"
+
+🤖 Guardian: "Launchpool 就像银行的定期存款送礼品：
+              
+              📝 怎么玩：
+              1. 把闲钱（BNB 或 USDT）存进去
+              2. 本金不动，随时可以取
+              3. 每天送你一些新币
+              
+              💰 举例：
+              存 100 USDT，7 天后：
+              - 本金：100 USDT（不会少）
+              - 奖励：价值 5-10 USDT 的新币
+              
+              ✅ 会不会亏？
+              - 本金不会亏（随时可以取）
+              - 新币可能涨也可能跌
+              - 但新币是白送的，不亏
+              
+              想参加吗？我教你怎么操作。"
+```
+
+**结果：** 新手理解了 Launchpool，成功参与活动。
+
+### 案例 3：及时预警账户异常
+
+**背景：** 用户的 API 密钥被盗，黑客尝试提币。
+
+**使用 Guardian：**
+
+```
+⚠️ 紧急预警！
+
+检测到您的账户有异常活动：
+
+🚨 异常详情：
+- 时间：2026-03-06 22:30
+- 行为：尝试提币到未知地址
+- 金额：500 USDT
+- 地址：0x1234...5678（未验证）
+
+🛡️ 已自动采取的措施：
+- 暂停提币功能
+- 发送验证码到手机
+- 记录异常 IP
+
+💡 立即操作：
+1. 修改密码（必须）
+2. 删除 API 密钥（必须）
+3. 检查登录设备
+4. 联系币安客服
+
+如果不是您本人操作，请立即点击"冻结账户"。
+
+[冻结账户] [我知道了]
+```
+
+**结果：** 用户及时发现异常，避免了资产损失。
 
 ---
 
-## 📈 Roadmap
+## 🌍 社会价值
 
-**Phase 1** ✅ (Completed)
-- ✅ Multi-pair monitoring
-- ✅ Arbitrage detection
-- ✅ Telegram alerts
-- ✅ Position management
-- ✅ Risk control (stop loss/take profit/trailing stop)
-- ✅ Order tracking
+### 1. 降低加密货币门槛
 
-**Phase 2** 🔄 (In Progress)
-- 🔄 Auto-execution (testnet)
-- 🔄 Web dashboard
-- 🔄 More strategies (grid, trend following)
-- 🔄 Backtesting system
+- 让不懂技术的人也能安全投资
+- 帮助长辈进入加密世界
+- 扩大加密货币用户群体
 
-**Phase 3** 📋 (Planned)
-- 📋 Live trading (mainnet)
-- 📋 Strategy marketplace
-- 📋 Mobile app
-- 📋 Advanced analytics
+### 2. 减少诈骗案件
+
+- 识别常见骗局（Pi 币、空气币）
+- 教育用户安全知识
+- 保护用户资产安全
+
+### 3. 提升行业形象
+
+- 展示加密货币的正面价值
+- 减少负面新闻（被骗、亏损）
+- 促进行业健康发展
 
 ---
 
-## 📄 License
+## 🤝 贡献
 
-MIT License - Free to use and modify
+欢迎贡献代码、提出建议或报告问题！
 
----
+### 如何贡献
 
-## 🔗 Links
+1. Fork 本仓库
+2. 创建功能分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 开启 Pull Request
 
-- [OpenClaw Official](https://openclaw.ai)
-- [OpenClaw Docs](https://docs.openclaw.ai)
-- [OpenClaw Discord](https://discord.com/invite/clawd)
-- [Binance API Docs](https://cryptoex-docs.github.io/apidocs/)
+### 贡献方向
 
----
-
-## 👤 Author
-
-**Brart**
-- Telegram: [@Ee_7t](https://t.me/Ee_7t)
-
----
-
-## 🙏 Acknowledgments
-
-- OpenClaw team for the powerful AI Agent framework
-- Binance for excellent trading APIs
-- NOFX for robust data infrastructure
-- Community for inspiration and feedback
+- 🌐 多语言支持（日语、韩语、西班牙语等）
+- 🎨 UI/UX 优化
+- 📚 更多安全课程内容
+- 🤖 AI 能力增强
+- 🔧 新功能开发
 
 ---
 
-⭐ If this project helps you, please give it a Star!
+## 📄 许可证
 
-**Built with ❤️ using OpenClaw**
+本项目采用 MIT 许可证 - 详见 [LICENSE](LICENSE) 文件
+
+---
+
+## 🙏 致谢
+
+- [OpenClaw](https://openclaw.ai) - 强大的 AI 框架
+- [Binance](https://www.binance.com) - 数据支持
+- [NOFX Community](https://nofx.io) - 专业数据源
+- 所有贡献者和用户
+
+---
+
+## 📞 联系我们
+
+- GitHub: [openclaw-trading-scout](https://github.com/pjl914335852-ux/openclaw-trading-scout)
+- Telegram: [@BinanceGuardianBot](https://t.me/BinanceGuardianBot)
+- Email: support@example.com
+
+---
+
+## 🎯 路线图
+
+### v3.0（计划中）
+
+- [ ] 多平台支持（WhatsApp、微信）
+- [ ] 更多语言（日语、韩语）
+- [ ] 视频教程
+- [ ] 社区功能
+
+### v2.6（开发中）
+
+- [ ] 语音交互优化
+- [ ] 更多安全课程
+- [ ] UI/UX 改进
+
+### v2.5（当前版本）
+
+- [x] 币安账户集成
+- [x] AI500 排行榜
+- [x] 语言切换
+- [x] 日志轮转
+
+---
+
+<div align="center">
+
+**让加密货币投资更安全 🛡️**
+
+Made with ❤️ by OpenClaw Community
+
+[开始使用](https://github.com/pjl914335852-ux/openclaw-trading-scout) • [文档](./docs) • [社区](https://discord.gg/openclaw)
+
+</div>
