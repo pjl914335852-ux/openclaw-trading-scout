@@ -12,22 +12,22 @@
 
 1. **Telegram Bot Token** / Telegram Bot 令牌
    ```
-   8690828587:AAFqH936sKzXtxJK7T-ctNsb2D0zeY1nT9Y
+   1234567890:ABCdefGHIjklMNOpqrsTUVwxyz1234567890
    ```
 
 2. **Telegram Chat ID** / Telegram 聊天 ID
    ```
-   6249730195
+   123456789
    ```
 
 3. **Binance API Key** / 币安 API 密钥
    ```
-   gSTvj8bIKOIVRMMJOcyYs07Ig3as3bvmMmeqZWsgBKeXE5zR1SNUeQcmDXB3cSMD
+   your_binance_api_key_here_64_characters_long_example_key_1234567890
    ```
 
 4. **Binance API Secret** / 币安 API 密钥
    ```
-   ciuT5taJbifyfZUs1xlE2JMFqiZ0obqpQ4tNbbkAmBALwSfJud0NihiXuDzgUrsp
+   your_binance_api_secret_here_64_characters_long_example_secret_0987654321
    ```
 
 5. **Any passwords, private keys, or credentials** / 任何密码、私钥或凭证
@@ -181,10 +181,10 @@ Instead of `config.json`, use `.env`:
 
 ```bash
 # .env (also in .gitignore)
-TELEGRAM_BOT_TOKEN=8690828587:AAFqH936sKzXtxJK7T-ctNsb2D0zeY1nT9Y
-TELEGRAM_CHAT_ID=6249730195
-BINANCE_API_KEY=gSTvj8bIKOIVRMMJOcyYs07Ig3as3bvmMmeqZWsgBKeXE5zR1SNUeQcmDXB3cSMD
-BINANCE_API_SECRET=ciuT5taJbifyfZUs1xlE2JMFqiZ0obqpQ4tNbbkAmBALwSfJud0NihiXuDzgUrsp
+TELEGRAM_BOT_TOKEN=1234567890:ABCdefGHIjklMNOpqrsTUVwxyz1234567890
+TELEGRAM_CHAT_ID=123456789
+BINANCE_API_KEY=your_binance_api_key_here_64_characters_long_example_key_1234567890
+BINANCE_API_SECRET=your_binance_api_secret_here_64_characters_long_example_secret_0987654321
 ```
 
 Load in code:
