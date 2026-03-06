@@ -95,6 +95,7 @@ const state = {
   lastNOFXUpdate: 0,
   lastHeartbeat: 0,
   lastDailySummary: 0,
+  lastSummaryText: null,
   requestCount: 0,
   requestResetTime: Date.now(),
   startTime: Date.now(),
@@ -524,6 +525,9 @@ async function sendDailySummary() {
     summaryText += lang === 'zh' ? 
       '\n💡 持续监控中，发现机会立即通知！' :
       '\n💡 Monitoring continues, instant alerts on opportunities!';
+    
+    // Save summary text for later viewing
+    state.lastSummaryText = summaryText;
     
     await bot.sendMessage(config.telegram.chatId, summaryText, { parse_mode: 'Markdown' });
     console.log('✅ Daily summary sent');

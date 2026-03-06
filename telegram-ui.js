@@ -178,6 +178,9 @@ I'm already running in the background! I'll notify you immediately when arbitrag
         ],
         [
           { text: this.lang === 'zh' ? '📝 历史记录' : '📝 History', callback_data: 'history' },
+          { text: this.lang === 'zh' ? '📅 上次摘要' : '📅 Last Summary', callback_data: 'last_summary' }
+        ],
+        [
           { text: this.lang === 'zh' ? '❓ 帮助' : '❓ Help', callback_data: 'help' }
         ],
         [
@@ -673,6 +676,9 @@ We are an intelligent assistant focused on cryptocurrency arbitrage monitoring, 
     } else if (data === 'test_alert') {
       // Test alert
       this.handleTestAlert(chatId, messageId, query.id);
+    } else if (data === 'last_summary') {
+      // Last summary
+      this.handleLastSummary(chatId, messageId, query.id);
     }
   }
   
@@ -1094,6 +1100,72 @@ ${testOpportunity.pair2}: ${testOpportunity.change2}%
     };
     
     this.bot.sendMessage(chatId, message, {
+      parse_mode: 'Markdown',
+      reply_markup: keyboard
+    });
+  }
+  
+  // Handle last summary
+  handleLastSummary(chatId, messageId, queryId) {
+    this.bot.answerCallbackQuery(queryId);
+    this.bot.deleteMessage(chatId, messageId).catch(() => {});
+    
+    if (!this.state.lastSummaryText) {
+      const noSummaryText = this.lang === 'zh' ? `
+📅 *上次摘要*
+
+❌ 暂无摘要数据
+
+机器人刚启动或还未生成第一次摘要。
+
+💡 每日摘要时间：
+• 早上 08:00
+• 中午 12:00
+• 晚上 20:00
+
+请等待下一次自动推送，或查看市场概览。
+      ` : `
+📅 *Last Summary*
+
+❌ No summary data yet
+
+Bot just started or first summary not generated yet.
+
+💡 Daily summary times:
+• Morning 08:00
+• Noon 12:00
+• Evening 20:00
+
+Wait for next auto-push or check market overview.
+      `;
+      
+      const keyboard = {
+        inline_keyboard: [
+          [
+            { text: this.lang === 'zh' ? '📊 市场概览' : '📊 Market Overview', callback_data: 'market_overview' },
+            { text: this.lang === 'zh' ? '🏠 返回' : '🏠 Back', callback_data: 'start' }
+          ]
+        ]
+      };
+      
+      this.bot.sendMessage(chatId, noSummaryText, {
+        parse_mode: 'Markdown',
+        reply_markup: keyboard
+      });
+      return;
+    }
+    
+    // Send last summary with back button
+    const keyboard = {
+      inline_keyboard: [
+        [
+          { text: this.lang === 'zh' ? '📊 市场概览' : '📊 Market Overview', callback_data: 'market_overview' },
+          { text: this.lang === 'zh' ? '🏠 返回' : '🏠 Back', callback_data: 'start' }
+        ]
+      ]
+    };
+    
+    this.bot.sendMessage(chatId, this.state.lastSummaryText, {
       parse_mode: 'Markdown',
       reply_markup: keyboard
     });
