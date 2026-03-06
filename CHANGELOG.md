@@ -1,5 +1,85 @@
 # Changelog
 
+## [2.5.0] - 2026-03-06
+
+### 💼 Binance Account & Language Switch
+
+#### Added
+- **Binance Account Integration:** View your portfolio from Telegram
+  - **Spot Holdings:** View all spot balances with pagination
+    - Shows free, locked, and total amounts
+    - 10 items per page
+    - Sorted by total value (highest first)
+    - Refresh button to update data
+  
+  - **Futures Positions:** View all futures positions with pagination
+    - Shows position side (LONG/SHORT)
+    - Entry price, mark price, leverage
+    - Unrealized PnL for each position
+    - Total PnL summary
+    - 5 items per page
+    - Color indicators: 🟢 LONG, 🔴 SHORT
+    - Profit indicators: 📈 profit, 📉 loss
+  
+  - **Earn Products:** Placeholder for future implementation
+    - Currently shows info message
+    - Requires Binance Earn API permission
+
+- **Language Switch Menu:** Dedicated language switcher
+  - Moved from main menu to submenu
+  - Shows current language
+  - Cleaner UI separation
+  - Supports English and Chinese
+
+- **Pagination System:** Handle large datasets
+  - Previous/Next buttons
+  - Page counter (X/Y pages)
+  - Refresh button on each page
+  - Smooth navigation
+
+#### Changed
+- **Main Menu UI:** Reorganized to 4 rows
+  - Row 1: Status, Modify Pairs
+  - Row 2: History, Last Summary
+  - Row 3: System Monitor, Binance Account (NEW!)
+  - Row 4: Language Switch (NEW!), Help
+  - Removed inline language buttons
+
+#### Technical
+- Added `handleBinanceAccount()` function
+- Added `handleLanguageSwitch()` function
+- Added `handleSpotHoldings(page)` with pagination
+- Added `handleFuturesPositions(page)` with pagination
+- Added `handleEarnProducts()` placeholder
+- Uses Binance REST API:
+  - Spot: `GET /api/v3/account`
+  - Futures: `GET /fapi/v2/positionRisk`
+- HMAC SHA256 signature authentication
+- Read-only API (safe, no trading)
+- Callback data format: `spot_holdings_{page}`, `futures_positions_{page}`
+
+#### Fixed
+- Fixed NOFX API configuration check in AI500 ranking
+- Added `nofx` config to config.json
+- Better error handling for missing API keys
+- Shows friendly error messages
+
+#### Security
+- Read-only API keys required
+- No trading permissions needed
+- Safe for viewing only
+- API keys stored in config.json (not in code)
+
+#### Benefits
+- Monitor your positions from Telegram
+- No need to open Binance app/website
+- Quick portfolio overview
+- Real-time PnL tracking
+- Pagination for large portfolios
+- Multi-language support
+
+---
+
 ## [2.4.0] - 2026-03-06
 
 ### 🔥 AI500 Ranking & Auto-Push
