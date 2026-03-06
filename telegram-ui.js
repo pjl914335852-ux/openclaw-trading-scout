@@ -4146,6 +4146,8 @@ Send /cancel to cancel
         setTimeout(() => {
           this.handlePriceAlerts(chatId, null, queryId);
         }, 500);
+      }).catch(error => {
+        console.error('Error sending message:', error);
       });
     } else {
       const text = this.lang === 'zh' ? '❌ 删除失败，提醒不存在' : '❌ Failed to remove, alert not found';
