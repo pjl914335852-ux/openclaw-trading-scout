@@ -1,5 +1,120 @@
 # Changelog
 
+## [2.3.0] - 2026-03-06
+
+### 🚀 Language Sync & System Monitor
+
+#### Added
+- **System Monitor Feature:** View server status from Telegram
+  - Added `/system` command
+  - Added "💻 系统监控" button in main menu
+  - Real-time display of:
+    - System uptime
+    - CPU usage (total, user, system, load average)
+    - Memory usage (total, used, available, free)
+    - Disk usage (total, used, available, percentage)
+    - Bot process info (PID, memory)
+  - Refresh button to update data
+  - No SSH needed to check server health
+
+#### Changed
+- **Language Synchronization:** UI language now syncs with daily summaries
+  - Click 🇬🇧 English → saves `language: "en"` to config
+  - Click 🇨🇳 中文 → saves `language: "zh"` to config
+  - Dynamic reload without service restart
+  - Changed `const lang` to `let lang` for runtime updates
+  - Daily summaries now match UI language
+
+- **Daily Summary Times:** Optimized for better user activity patterns
+  - Before: 09:00, 14:00, 20:00
+  - After: 08:00, 12:00, 20:00
+  - 08:00 - Morning wake up time
+  - 12:00 - Lunch time
+  - 20:00 - Evening after work
+
+#### Technical
+- Added `onConfigChange` callback for dynamic language reload
+- System monitor uses Linux commands (free, df, uptime, top)
+- Multi-language support for system monitor (EN/ZH)
+- Main menu reorganized to 4 rows
+
+#### Benefits
+- Unified language experience across all features
+- Monitor server health without SSH
+- Better timing for daily summaries
+- Quick troubleshooting from Telegram
+
+---
+
+## [2.2.0] - 2026-03-06
+
+### 🎯 Major Feature Additions
+
+#### Added
+- **Adjustable Threshold:** Control arbitrage sensitivity (0.1%-1.0%)
+  - Added "🎯 套利阈值" button in pairs page
+  - Default: 0.5%
+  - Lower threshold = more opportunities
+  - Higher threshold = better quality
+
+- **Market Overview:** Real-time price monitoring
+  - Added "📊 市场概览" button in pairs page
+  - Shows all monitored pairs with:
+    - Current price
+    - 24h change percentage
+    - 24h trading volume
+  - Refresh anytime
+
+- **Test Alert:** Verify bot is working
+  - Added "🧪 测试通知" button in pairs page
+  - Sends simulated arbitrage notification
+  - Check notification format and content
+
+- **Daily Market Summary:** Automated market reports (3x/day)
+  - Sends at 09:00, 14:00, 20:00
+  - Content includes:
+    - 📈 Top 3 gainers
+    - 📉 Top 3 losers
+    - 📊 Statistics (pairs, volume, opportunities)
+    - 🎯 Recent opportunities
+  - Keeps users informed even without arbitrage
+
+- **View Last Summary:** Check previous summary anytime
+  - Added "📅 上次摘要" button in main menu
+  - Cached summary text
+  - Shows next summary time if none exists
+
+#### Changed
+- **Pairs Page UI:** Reorganized to 5 rows
+  - Row 1: Add Pair, Remove Pair
+  - Row 2: Set Interval, Set Threshold (NEW!)
+  - Row 3: Toggle Push, Market Overview (NEW!)
+  - Row 4: Test Alert (NEW!), History
+  - Row 5: Back to Menu
+
+- **Main Menu UI:** Added Last Summary button
+  - Row 1: Status, Modify Pairs
+  - Row 2: History, Last Summary (NEW!)
+  - Row 3: Help
+  - Row 4: Language switch
+
+#### Technical
+- Added `prevPriceCache` for price change tracking
+- Added `lastDailySummary` timestamp
+- Added `lastSummaryText` for caching
+- Added `scheduleDailySummary()` function
+- Added `sendDailySummary()` function
+- 14 callback handlers registered
+
+#### Benefits
+- More control over opportunity frequency
+- Better market visibility
+- Verify bot is working anytime
+- Regular market updates
+- Feel like app is actively working
+
+---
+
 ## [2.1.0] - 2026-03-06
 
 ### 🎉 Major UI/UX Improvements & Bug Fixes
