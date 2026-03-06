@@ -1292,6 +1292,25 @@ Click buttons below to select a topic 👇
     } else if (data === 'last_summary') {
       // Last summary
       this.handleLastSummary(chatId, messageId, query.id);
+    } else if (data === 'deposit_history') {
+      // Deposit history
+      this.handleDepositHistory(chatId, messageId, query.id);
+    } else if (data === 'withdraw_history') {
+      // Withdraw history
+      this.handleWithdrawHistory(chatId, messageId, query.id);
+    } else if (data === 'deposit_address') {
+      // Deposit address
+      this.handleDepositAddress(chatId, messageId, query.id);
+    } else if (data === 'spot_trades') {
+      // Spot trades
+      this.handleSpotTrades(chatId, messageId, query.id);
+    } else if (data === 'futures_trades') {
+      // Futures trades
+      this.handleFuturesTrades(chatId, messageId, query.id);
+    } else if (data.startsWith('deposit_addr_')) {
+      // Specific coin deposit address
+      const coin = data.replace('deposit_addr_', '');
+      this.handleSpecificDepositAddress(chatId, messageId, query.id, coin);
     }
   }
   
@@ -2264,8 +2283,18 @@ Guardian mode remains enabled
 
 查看你的币安账户信息：
 
-• 📊 现货持仓
-• 📈 合约持仓
+*📊 资产相关*
+• 现货持仓
+• 合约持仓
+
+*💰 资金记录*
+• 充值记录
+• 提现记录
+• 充值地址
+
+*📝 交易记录*
+• 现货交易历史
+• 合约交易历史
 
 请选择要查看的内容：
     `.trim() : `
@@ -2273,8 +2302,18 @@ Guardian mode remains enabled
 
 View your Binance account information:
 
-• 📊 Spot Holdings
-• 📈 Futures Positions
+*📊 Assets*
+• Spot Holdings
+• Futures Positions
+
+*💰 Fund Records*
+• Deposit History
+• Withdraw History
+• Deposit Address
+
+*📝 Trade Records*
+• Spot Trade History
+• Futures Trade History
 
 Please select what you want to view:
     `.trim();
@@ -2282,10 +2321,19 @@ Please select what you want to view:
     const keyboard = {
       inline_keyboard: [
         [
-          { text: this.lang === 'zh' ? '📊 现货持仓' : '📊 Spot Holdings', callback_data: 'spot_holdings_0' }
+          { text: this.lang === 'zh' ? '📊 现货持仓' : '📊 Spot Holdings', callback_data: 'spot_holdings_0' },
+          { text: this.lang === 'zh' ? '📈 合约持仓' : '📈 Futures Positions', callback_data: 'futures_positions_0' }
         ],
         [
-          { text: this.lang === 'zh' ? '📈 合约持仓' : '📈 Futures Positions', callback_data: 'futures_positions_0' }
+          { text: this.lang === 'zh' ? '💵 充值记录' : '💵 Deposits', callback_data: 'deposit_history' },
+          { text: this.lang === 'zh' ? '💸 提现记录' : '💸 Withdrawals', callback_data: 'withdraw_history' }
+        ],
+        [
+          { text: this.lang === 'zh' ? '📍 充值地址' : '📍 Deposit Address', callback_data: 'deposit_address' }
+        ],
+        [
+          { text: this.lang === 'zh' ? '📝 现货交易' : '📝 Spot Trades', callback_data: 'spot_trades' },
+          { text: this.lang === 'zh' ? '📊 合约交易' : '📊 Futures Trades', callback_data: 'futures_trades' }
         ],
         [
           { text: this.lang === 'zh' ? '🔙 返回主菜单' : '🔙 Back to Menu', callback_data: 'start' }
@@ -2775,6 +2823,475 @@ Or click /help to see all features.
       
       this.bot.sendMessage(chatId, helpText, { parse_mode: 'Markdown' });
     }
+  }
+  
+  // Handle deposit history
+  async handleDepositHistory(chatId, messageId, queryId) {
+    this.bot.answerCallbackQuery(queryId, { text: this.lang === 'zh' ? '💵 获取充值记录...' : '💵 Fetching deposits...', show_alert: false });
+    this.bot.deleteMessage(chatId, messageId).catch(() => {});
+    
+    try {
+      const axios = require('axios');
+      const crypto = require('crypto');
+      
+      if (!this.config.cryptoex || !this.config.cryptoex.apiKey || !this.config.cryptoex.apiSecret) {
+        const errorText = this.lang === 'zh' ? 
+          '❌ 币安 API 未配置\n\n请在 config.json 中添加 API 密钥' :
+          '❌ Binance API not configured\n\nPlease add API keys in config.json';
+        
+        this.bot.sendMessage(chatId, errorText, {
+          reply_markup: {
+            inline_keyboard: [[
+              { text: this.lang === 'zh' ? '🔙 返回' : '🔙 Back', callback_data: 'binance_account' }
+            ]]
+          }
+        });
+        return;
+      }
+      
+      const timestamp = Date.now();
+      const queryString = `timestamp=${timestamp}`;
+      const signature = crypto
+        .createHmac('sha256', this.config.cryptoex.apiSecret)
+        .update(queryString)
+        .digest('hex');
+      
+      const response = await axios.get('https://api.binance.com/sapi/v1/capital/deposit/hisrec', {
+        headers: { 'X-MBX-APIKEY': this.config.cryptoex.apiKey },
+        params: { timestamp, signature }
+      });
+      
+      const deposits = response.data;
+      
+      if (!deposits || deposits.length === 0) {
+        const text = this.lang === 'zh' ? 
+          '💵 *充值记录*\n\n暂无充值记录' :
+          '💵 *Deposit History*\n\nNo deposits found';
+        
+        this.bot.sendMessage(chatId, text, {
+          parse_mode: 'Markdown',
+          reply_markup: {
+            inline_keyboard: [[
+              { text: this.lang === 'zh' ? '🔙 返回' : '🔙 Back', callback_data: 'binance_account' }
+            ]]
+          }
+        });
+        return;
+      }
+      
+      // Show last 10 deposits
+      const recentDeposits = deposits.slice(0, 10);
+      
+      let text = this.lang === 'zh' ? '💵 *充值记录*\n\n' : '💵 *Deposit History*\n\n';
+      
+      recentDeposits.forEach((deposit, index) => {
+        const date = new Date(deposit.insertTime).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
+        const status = deposit.status === 1 ? '✅' : '⏳';
+        
+        text += `${index + 1}. ${status} ${deposit.coin}\n`;
+        text += `   ${this.lang === 'zh' ? '数量' : 'Amount'}: ${deposit.amount}\n`;
+        text += `   ${this.lang === 'zh' ? '时间' : 'Time'}: ${date}\n`;
+        if (deposit.network) {
+          text += `   ${this.lang === 'zh' ? '网络' : 'Network'}: ${deposit.network}\n`;
+        }
+        text += `\n`;
+      });
+      
+      if (deposits.length > 10) {
+        text += this.lang === 'zh' ? 
+          `\n💡 仅显示最近 10 条记录，共 ${deposits.length} 条` :
+          `\n💡 Showing last 10 of ${deposits.length} records`;
+      }
+      
+      this.bot.sendMessage(chatId, text, {
+        parse_mode: 'Markdown',
+        reply_markup: {
+          inline_keyboard: [[
+            { text: this.lang === 'zh' ? '🔙 返回' : '🔙 Back', callback_data: 'binance_account' }
+          ]]
+        }
+      });
+      
+    } catch (error) {
+      console.error('Error fetching deposit history:', error);
+      const errorText = this.lang === 'zh' ? 
+        `❌ 获取充值记录失败\n\n${error.message}` :
+        `❌ Failed to fetch deposits\n\n${error.message}`;
+      
+      this.bot.sendMessage(chatId, errorText, {
+        reply_markup: {
+          inline_keyboard: [[
+            { text: this.lang === 'zh' ? '🔙 返回' : '🔙 Back', callback_data: 'binance_account' }
+          ]]
+        }
+      });
+    }
+  }
+  
+  // Handle withdraw history
+  async handleWithdrawHistory(chatId, messageId, queryId) {
+    this.bot.answerCallbackQuery(queryId, { text: this.lang === 'zh' ? '💸 获取提现记录...' : '💸 Fetching withdrawals...', show_alert: false });
+    this.bot.deleteMessage(chatId, messageId).catch(() => {});
+    
+    try {
+      const axios = require('axios');
+      const crypto = require('crypto');
+      
+      if (!this.config.cryptoex || !this.config.cryptoex.apiKey || !this.config.cryptoex.apiSecret) {
+        const errorText = this.lang === 'zh' ? 
+          '❌ 币安 API 未配置' :
+          '❌ Binance API not configured';
+        
+        this.bot.sendMessage(chatId, errorText, {
+          reply_markup: {
+            inline_keyboard: [[
+              { text: this.lang === 'zh' ? '🔙 返回' : '🔙 Back', callback_data: 'binance_account' }
+            ]]
+          }
+        });
+        return;
+      }
+      
+      const timestamp = Date.now();
+      const queryString = `timestamp=${timestamp}`;
+      const signature = crypto
+        .createHmac('sha256', this.config.cryptoex.apiSecret)
+        .update(queryString)
+        .digest('hex');
+      
+      const response = await axios.get('https://api.binance.com/sapi/v1/capital/withdraw/history', {
+        headers: { 'X-MBX-APIKEY': this.config.cryptoex.apiKey },
+        params: { timestamp, signature }
+      });
+      
+      const withdrawals = response.data;
+      
+      if (!withdrawals || withdrawals.length === 0) {
+        const text = this.lang === 'zh' ? 
+          '💸 *提现记录*\n\n暂无提现记录' :
+          '💸 *Withdraw History*\n\nNo withdrawals found';
+        
+        this.bot.sendMessage(chatId, text, {
+          parse_mode: 'Markdown',
+          reply_markup: {
+            inline_keyboard: [[
+              { text: this.lang === 'zh' ? '🔙 返回' : '🔙 Back', callback_data: 'binance_account' }
+            ]]
+          }
+        });
+        return;
+      }
+      
+      const recentWithdrawals = withdrawals.slice(0, 10);
+      
+      let text = this.lang === 'zh' ? '💸 *提现记录*\n\n' : '💸 *Withdraw History*\n\n';
+      
+      recentWithdrawals.forEach((withdrawal, index) => {
+        const date = new Date(withdrawal.applyTime).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
+        const statusMap = {
+          0: '⏳',
+          1: '❌',
+          2: '⏳',
+          3: '⏳',
+          4: '⏳',
+          5: '⏳',
+          6: '✅'
+        };
+        const status = statusMap[withdrawal.status] || '❓';
+        
+        text += `${index + 1}. ${status} ${withdrawal.coin}\n`;
+        text += `   ${this.lang === 'zh' ? '数量' : 'Amount'}: ${withdrawal.amount}\n`;
+        text += `   ${this.lang === 'zh' ? '时间' : 'Time'}: ${date}\n`;
+        if (withdrawal.network) {
+          text += `   ${this.lang === 'zh' ? '网络' : 'Network'}: ${withdrawal.network}\n`;
+        }
+        text += `\n`;
+      });
+      
+      if (withdrawals.length > 10) {
+        text += this.lang === 'zh' ? 
+          `\n💡 仅显示最近 10 条记录，共 ${withdrawals.length} 条` :
+          `\n💡 Showing last 10 of ${withdrawals.length} records`;
+      }
+      
+      this.bot.sendMessage(chatId, text, {
+        parse_mode: 'Markdown',
+        reply_markup: {
+          inline_keyboard: [[
+            { text: this.lang === 'zh' ? '🔙 返回' : '🔙 Back', callback_data: 'binance_account' }
+          ]]
+        }
+      });
+      
+    } catch (error) {
+      console.error('Error fetching withdraw history:', error);
+      const errorText = this.lang === 'zh' ? 
+        `❌ 获取提现记录失败\n\n${error.message}` :
+        `❌ Failed to fetch withdrawals\n\n${error.message}`;
+      
+      this.bot.sendMessage(chatId, errorText, {
+        reply_markup: {
+          inline_keyboard: [[
+            { text: this.lang === 'zh' ? '🔙 返回' : '🔙 Back', callback_data: 'binance_account' }
+          ]]
+        }
+      });
+    }
+  }
+  
+  // Handle deposit address
+  async handleDepositAddress(chatId, messageId, queryId) {
+    this.bot.answerCallbackQuery(queryId);
+    this.bot.deleteMessage(chatId, messageId).catch(() => {});
+    
+    const text = this.lang === 'zh' ? `
+📍 *充值地址*
+
+请选择要查看充值地址的币种：
+
+💡 提示：
+• 充值前请确认网络类型
+• 不同网络的地址不同
+• 充值到错误网络会导致资产丢失
+
+常用币种：
+    `.trim() : `
+📍 *Deposit Address*
+
+Please select the coin to view deposit address:
+
+💡 Tips:
+• Confirm network type before deposit
+• Different networks have different addresses
+• Depositing to wrong network will cause asset loss
+
+Popular coins:
+    `.trim();
+    
+    const keyboard = {
+      inline_keyboard: [
+        [
+          { text: 'BTC', callback_data: 'deposit_addr_BTC' },
+          { text: 'ETH', callback_data: 'deposit_addr_ETH' },
+          { text: 'USDT', callback_data: 'deposit_addr_USDT' }
+        ],
+        [
+          { text: 'BNB', callback_data: 'deposit_addr_BNB' },
+          { text: 'SOL', callback_data: 'deposit_addr_SOL' },
+          { text: 'XRP', callback_data: 'deposit_addr_XRP' }
+        ],
+        [
+          { text: this.lang === 'zh' ? '🔙 返回' : '🔙 Back', callback_data: 'binance_account' }
+        ]
+      ]
+    };
+    
+    this.bot.sendMessage(chatId, text, {
+      parse_mode: 'Markdown',
+      reply_markup: keyboard
+    });
+  }
+  
+  // Handle specific coin deposit address
+  async handleSpecificDepositAddress(chatId, messageId, queryId, coin) {
+    this.bot.answerCallbackQuery(queryId, { text: this.lang === 'zh' ? `📍 获取 ${coin} 充值地址...` : `📍 Fetching ${coin} address...`, show_alert: false });
+    this.bot.deleteMessage(chatId, messageId).catch(() => {});
+    
+    try {
+      const axios = require('axios');
+      const crypto = require('crypto');
+      
+      if (!this.config.cryptoex || !this.config.cryptoex.apiKey || !this.config.cryptoex.apiSecret) {
+        const errorText = this.lang === 'zh' ? 
+          '❌ 币安 API 未配置' :
+          '❌ Binance API not configured';
+        
+        this.bot.sendMessage(chatId, errorText, {
+          reply_markup: {
+            inline_keyboard: [[
+              { text: this.lang === 'zh' ? '🔙 返回' : '🔙 Back', callback_data: 'deposit_address' }
+            ]]
+          }
+        });
+        return;
+      }
+      
+      const timestamp = Date.now();
+      const queryString = `coin=${coin}&timestamp=${timestamp}`;
+      const signature = crypto
+        .createHmac('sha256', this.config.cryptoex.apiSecret)
+        .update(queryString)
+        .digest('hex');
+      
+      const response = await axios.get('https://api.binance.com/sapi/v1/capital/deposit/address', {
+        headers: { 'X-MBX-APIKEY': this.config.cryptoex.apiKey },
+        params: { coin, timestamp, signature }
+      });
+      
+      const addressData = response.data;
+      
+      let text = this.lang === 'zh' ? 
+        `📍 *${coin} 充值地址*\n\n` :
+        `📍 *${coin} Deposit Address*\n\n`;
+      
+      text += `${this.lang === 'zh' ? '币种' : 'Coin'}: ${addressData.coin}\n`;
+      text += `${this.lang === 'zh' ? '地址' : 'Address'}: \`${addressData.address}\`\n`;
+      
+      if (addressData.tag) {
+        text += `${this.lang === 'zh' ? '标签/Memo' : 'Tag/Memo'}: \`${addressData.tag}\`\n`;
+      }
+      
+      if (addressData.url) {
+        text += `${this.lang === 'zh' ? '网络' : 'Network'}: ${addressData.url}\n`;
+      }
+      
+      text += `\n⚠️ ${this.lang === 'zh' ? '重要提示' : 'Important'}:\n`;
+      text += this.lang === 'zh' ? 
+        `• 请确认网络类型正确\n• 充值到错误网络会导致资产丢失\n• 某些币种需要填写标签/Memo` :
+        `• Confirm network type is correct\n• Wrong network will cause asset loss\n• Some coins require tag/memo`;
+      
+      this.bot.sendMessage(chatId, text, {
+        parse_mode: 'Markdown',
+        reply_markup: {
+          inline_keyboard: [[
+            { text: this.lang === 'zh' ? '🔙 返回' : '🔙 Back', callback_data: 'deposit_address' }
+          ]]
+        }
+      });
+      
+    } catch (error) {
+      console.error('Error fetching deposit address:', error);
+      const errorText = this.lang === 'zh' ? 
+        `❌ 获取充值地址失败\n\n${error.response?.data?.msg || error.message}` :
+        `❌ Failed to fetch deposit address\n\n${error.response?.data?.msg || error.message}`;
+      
+      this.bot.sendMessage(chatId, errorText, {
+        reply_markup: {
+          inline_keyboard: [[
+            { text: this.lang === 'zh' ? '🔙 返回' : '🔙 Back', callback_data: 'deposit_address' }
+          ]]
+        }
+      });
+    }
+  }
+  
+  // Handle spot trades
+  async handleSpotTrades(chatId, messageId, queryId) {
+    this.bot.answerCallbackQuery(queryId, { text: this.lang === 'zh' ? '📝 获取现货交易记录...' : '📝 Fetching spot trades...', show_alert: false });
+    this.bot.deleteMessage(chatId, messageId).catch(() => {});
+    
+    try {
+      const axios = require('axios');
+      const crypto = require('crypto');
+      
+      if (!this.config.cryptoex || !this.config.cryptoex.apiKey || !this.config.cryptoex.apiSecret) {
+        const errorText = this.lang === 'zh' ? 
+          '❌ 币安 API 未配置' :
+          '❌ Binance API not configured';
+        
+        this.bot.sendMessage(chatId, errorText, {
+          reply_markup: {
+            inline_keyboard: [[
+              { text: this.lang === 'zh' ? '🔙 返回' : '🔙 Back', callback_data: 'binance_account' }
+            ]]
+          }
+        });
+        return;
+      }
+      
+      // Get recent trades for BTCUSDT as example
+      const symbol = 'BTCUSDT';
+      const timestamp = Date.now();
+      const queryString = `symbol=${symbol}&timestamp=${timestamp}`;
+      const signature = crypto
+        .createHmac('sha256', this.config.cryptoex.apiSecret)
+        .update(queryString)
+        .digest('hex');
+      
+      const response = await axios.get('https://api.binance.com/api/v3/myTrades', {
+        headers: { 'X-MBX-APIKEY': this.config.cryptoex.apiKey },
+        params: { symbol, timestamp, signature, limit: 10 }
+      });
+      
+      const trades = response.data;
+      
+      if (!trades || trades.length === 0) {
+        const text = this.lang === 'zh' ? 
+          `📝 *现货交易记录*\n\n暂无 ${symbol} 交易记录` :
+          `📝 *Spot Trade History*\n\nNo ${symbol} trades found`;
+        
+        this.bot.sendMessage(chatId, text, {
+          parse_mode: 'Markdown',
+          reply_markup: {
+            inline_keyboard: [[
+              { text: this.lang === 'zh' ? '🔙 返回' : '🔙 Back', callback_data: 'binance_account' }
+            ]]
+          }
+        });
+        return;
+      }
+      
+      let text = this.lang === 'zh' ? 
+        `📝 *现货交易记录*\n\n交易对: ${symbol}\n\n` :
+        `📝 *Spot Trade History*\n\nPair: ${symbol}\n\n`;
+      
+      trades.forEach((trade, index) => {
+        const date = new Date(trade.time).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
+        const side = trade.isBuyer ? (this.lang === 'zh' ? '买入' : 'BUY') : (this.lang === 'zh' ? '卖出' : 'SELL');
+        const sideIcon = trade.isBuyer ? '🟢' : '🔴';
+        
+        text += `${index + 1}. ${sideIcon} ${side}\n`;
+        text += `   ${this.lang === 'zh' ? '价格' : 'Price'}: ${parseFloat(trade.price).toFixed(2)} USDT\n`;
+        text += `   ${this.lang === 'zh' ? '数量' : 'Qty'}: ${parseFloat(trade.qty).toFixed(6)}\n`;
+        text += `   ${this.lang === 'zh' ? '时间' : 'Time'}: ${date}\n\n`;
+      });
+      
+      text += this.lang === 'zh' ? 
+        `\n💡 仅显示 ${symbol} 最近 10 条交易` :
+        `\n💡 Showing last 10 ${symbol} trades`;
+      
+      this.bot.sendMessage(chatId, text, {
+        parse_mode: 'Markdown',
+        reply_markup: {
+          inline_keyboard: [[
+            { text: this.lang === 'zh' ? '🔙 返回' : '🔙 Back', callback_data: 'binance_account' }
+          ]]
+        }
+      });
+      
+    } catch (error) {
+      console.error('Error fetching spot trades:', error);
+      const errorText = this.lang === 'zh' ? 
+        `❌ 获取交易记录失败\n\n${error.response?.data?.msg || error.message}` :
+        `❌ Failed to fetch trades\n\n${error.response?.data?.msg || error.message}`;
+      
+      this.bot.sendMessage(chatId, errorText, {
+        reply_markup: {
+          inline_keyboard: [[
+            { text: this.lang === 'zh' ? '🔙 返回' : '🔙 Back', callback_data: 'binance_account' }
+          ]]
+        }
+      });
+    }
+  }
+  
+  // Handle futures trades (placeholder)
+  async handleFuturesTrades(chatId, messageId, queryId) {
+    this.bot.answerCallbackQuery(queryId);
+    this.bot.deleteMessage(chatId, messageId).catch(() => {});
+    
+    const text = this.lang === 'zh' ? 
+      '📊 *合约交易记录*\n\n此功能需要合约 API 权限\n\n💡 提示：合约交易风险较高，建议谨慎使用' :
+      '📊 *Futures Trade History*\n\nThis feature requires futures API permission\n\n💡 Tip: Futures trading is high risk, use with caution';
+    
+    this.bot.sendMessage(chatId, text, {
+      parse_mode: 'Markdown',
+      reply_markup: {
+        inline_keyboard: [[
+          { text: this.lang === 'zh' ? '🔙 返回' : '🔙 Back', callback_data: 'binance_account' }
+        ]]
+      }
+    });
   }
   
   // Save config to file
