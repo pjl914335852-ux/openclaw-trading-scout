@@ -21,7 +21,10 @@ class TelegramUI {
     this.safetyLessons = new SafetyLessons();
     
     // 守护者模式（长辈模式）
-    this.guardianMode = config.guardianMode !== false; // 默认开启
+    this.guardianMode = config.guardian?.enabled !== false; // 默认开启
+    
+    // 密码输入状态
+    this.waitingForPassword = null;
     
     this.setupErrorHandlers();
     this.setupCommands();
@@ -158,22 +161,24 @@ class TelegramUI {
 
 *🎯 我能帮你：*
 
-• 🛡️ 识别诈骗币（如 Pi 币）
-• 🗣️ 翻译专业术语成大白话
-• 📚 每日安全课堂
-• 💼 监控账户安全
-• 🔔 市场异动提醒
+• 🛡️ 检查币种安全性
+• 🗣️ 翻译专业术语
+• 📚 学习安全知识
+• 💼 监控账户异常
+• 🔔 风险预警提醒
 
 *💡 快速开始：*
 
-• 问我："Pi 币能买吗？"
-• 问我："什么是 Launchpool？"
-• 发送 /lesson 查看今日课程
+💬 你可以这样问我：
+• "XX币安全吗？"
+• "XX是什么？"
+• "怎么防骗？"
+• "今天学什么？"
 
 *🛡️ 守护者模式：*
 
-当前状态: ${this.guardianMode ? '✅ 已开启' : '❌ 已关闭'}
-发送 /guardian 切换模式
+当前状态: ${this.guardianMode ? '✅ 已开启（安全保护中）' : '❌ 已关闭'}
+${this.guardianMode ? '💡 守护者模式会自动拦截风险操作' : '⚠️ 关闭守护模式需要密码验证'}
 
 点击下方按钮快速访问功能 👇
     ` : `
@@ -183,22 +188,24 @@ I'm your crypto safety assistant, designed for beginners and elderly users.
 
 *🎯 I can help you:*
 
-• 🛡️ Identify scam coins (like Pi coin)
-• 🗣️ Translate technical terms to plain language
-• 📚 Daily safety lessons
-• 💼 Monitor account security
-• 🔔 Market alerts
+• 🛡️ Check coin safety
+• 🗣️ Translate technical terms
+• 📚 Learn safety knowledge
+• 💼 Monitor account anomalies
+• 🔔 Risk alert notifications
 
 *💡 Quick Start:*
 
-• Ask me: "Is Pi coin safe?"
-• Ask me: "What is Launchpool?"
-• Send /lesson for today's lesson
+💬 You can ask me like this:
+• "Is XX coin safe?"
+• "What is XX?"
+• "How to prevent scams?"
+• "What to learn today?"
 
 *🛡️ Guardian Mode:*
 
-Current Status: ${this.guardianMode ? '✅ Enabled' : '❌ Disabled'}
-Send /guardian to toggle
+Current status: ${this.guardianMode ? '✅ Enabled (Protected)' : '❌ Disabled'}
+${this.guardianMode ? '💡 Guardian mode auto-blocks risky operations' : '⚠️ Password required to disable guardian mode'}
 
 Click buttons below for quick access 👇
     `;
@@ -551,10 +558,13 @@ We are an AI safety assistant designed for crypto beginners and elderly users, b
 
 *🎯 快速开始:*
 
-• 问我："Pi 币能买吗？"
-• 问我："什么是 Launchpool？"
-• 发送 /lesson 查看今日课程
-• 点击"检查币种"输入币名
+💬 你可以这样问我：
+• 关于币种："XX币安全吗？" "XX币能买吗？"
+• 关于功能："XX是什么？" "怎么用XX？"
+• 关于安全："怎么防骗？" "如何保护资产？"
+• 关于学习："今天学什么？" "有什么课程？"
+
+💡 提示：直接说出你的问题，我会理解并帮助你
 
 *💡 使用提示:*
 
@@ -584,10 +594,13 @@ We are an AI safety assistant designed for crypto beginners and elderly users, b
 
 *🎯 Quick Start:*
 
-• Ask me: "Is Pi coin safe?"
-• Ask me: "What is Launchpool?"
-• Send /lesson for today's lesson
-• Click "Check Coin" to enter coin name
+💬 You can ask me like this:
+• About coins: "Is XX coin safe?" "Can I buy XX?"
+• About features: "What is XX?" "How to use XX?"
+• About safety: "How to prevent scams?" "How to protect assets?"
+• About learning: "What to learn today?" "Any courses?"
+
+💡 Tip: Just ask your question, I'll understand and help
 
 *💡 Usage Tips:*
 
@@ -866,18 +879,116 @@ We are an AI safety assistant designed for crypto beginners and elderly users, b
       this.handleLesson({ chat: { id: chatId } });
       
     } else if (data === 'toggle_guardian') {
-      // Toggle guardian mode
-      this.guardianMode = !this.guardianMode;
-      
-      const text = this.lang === 'zh' ? 
-        `${this.guardianMode ? '✅ 已开启守护者模式' : '❌ 已关闭守护者模式'}` :
-        `${this.guardianMode ? '✅ Guardian mode enabled' : '❌ Guardian mode disabled'}`;
-      
-      this.bot.answerCallbackQuery(query.id, { text, show_alert: true });
-      
-      // 刷新主菜单
+      // Toggle guardian mode with password protection
+      this.bot.answerCallbackQuery(query.id);
       this.bot.deleteMessage(chatId, messageId).catch(() => {});
-      this.handleStart({ chat: { id: chatId } });
+      
+      if (this.guardianMode) {
+        // 关闭守护模式 - 需要密码
+        if (!this.config.guardian.passwordSet) {
+          // 首次设置密码
+          const text = this.lang === 'zh' ? `
+🔐 *设置守护者密码*
+
+为了保护你的安全，关闭守护者模式需要密码验证。
+
+请设置一个 4-6 位数字密码：
+
+⚠️ 注意：
+• 请牢记这个密码
+• 密码用于关闭守护者模式
+• 不要告诉任何人
+
+请输入密码（4-6位数字）：
+          `.trim() : `
+🔐 *Set Guardian Password*
+
+To protect your safety, disabling guardian mode requires password verification.
+
+Please set a 4-6 digit password:
+
+⚠️ Note:
+• Remember this password
+• Password is used to disable guardian mode
+• Don't tell anyone
+
+Please enter password (4-6 digits):
+          `.trim();
+          
+          const keyboard = {
+            inline_keyboard: [
+              [
+                { text: this.lang === 'zh' ? '🔙 取消' : '🔙 Cancel', callback_data: 'start' }
+              ]
+            ]
+          };
+          
+          this.bot.sendMessage(chatId, text, {
+            parse_mode: 'Markdown',
+            reply_markup: keyboard
+          });
+          
+          // 等待用户输入密码
+          this.waitingForPassword = { chatId, action: 'set' };
+        } else {
+          // 验证密码
+          const text = this.lang === 'zh' ? `
+🔐 *验证守护者密码*
+
+请输入密码以关闭守护者模式：
+
+⚠️ 关闭守护者模式后：
+• 将显示所有高风险功能
+• 不再自动拦截风险操作
+• 建议仅在必要时关闭
+
+请输入密码：
+          `.trim() : `
+🔐 *Verify Guardian Password*
+
+Please enter password to disable guardian mode:
+
+⚠️ After disabling guardian mode:
+• All high-risk features will be shown
+• No auto-blocking of risky operations
+• Recommended to disable only when necessary
+
+Please enter password:
+          `.trim();
+          
+          const keyboard = {
+            inline_keyboard: [
+              [
+                { text: this.lang === 'zh' ? '🔙 取消' : '🔙 Cancel', callback_data: 'start' }
+              ]
+            ]
+          };
+          
+          this.bot.sendMessage(chatId, text, {
+            parse_mode: 'Markdown',
+            reply_markup: keyboard
+          });
+          
+          // 等待用户输入密码
+          this.waitingForPassword = { chatId, action: 'verify' };
+        }
+      } else {
+        // 开启守护模式 - 不需要密码
+        this.guardianMode = true;
+        this.config.guardian.enabled = true;
+        this.saveConfig();
+        
+        const text = this.lang === 'zh' ? 
+          '✅ 已开启守护者模式\n\n💡 守护者模式会自动拦截风险操作，保护你的资产安全' :
+          '✅ Guardian mode enabled\n\n💡 Guardian mode will auto-block risky operations to protect your assets';
+        
+        this.bot.sendMessage(chatId, text);
+        
+        // 刷新主菜单
+        setTimeout(() => {
+          this.handleStart({ chat: { id: chatId } });
+        }, 1000);
+      }
       
     } else if (data === 'past_lessons') {
       // Past lessons menu
@@ -1737,6 +1848,118 @@ Wait for next auto-push or check market overview.
     
     if (!text) return;
     
+    // Handle password input
+    if (this.waitingForPassword && this.waitingForPassword.chatId === chatId) {
+      const action = this.waitingForPassword.action;
+      delete this.waitingForPassword;
+      
+      // Validate password format (4-6 digits)
+      if (!/^\d{4,6}$/.test(text)) {
+        this.bot.sendMessage(chatId, this.lang === 'zh' ? 
+          '❌ 密码格式错误！请输入 4-6 位数字' :
+          '❌ Invalid password format! Please enter 4-6 digits'
+        );
+        return;
+      }
+      
+      if (action === 'set') {
+        // 设置密码
+        this.config.guardian.password = text;
+        this.config.guardian.passwordSet = true;
+        this.saveConfig();
+        
+        const successText = this.lang === 'zh' ? `
+✅ *密码设置成功！*
+
+你的守护者密码已设置为：\`${text}\`
+
+⚠️ 请务必记住这个密码！
+
+💡 下次关闭守护者模式时需要输入此密码。
+        `.trim() : `
+✅ *Password set successfully!*
+
+Your guardian password is set to: \`${text}\`
+
+⚠️ Please remember this password!
+
+💡 You'll need to enter this password to disable guardian mode next time.
+        `.trim();
+        
+        this.bot.sendMessage(chatId, successText, { parse_mode: 'Markdown' });
+        
+        // 刷新主菜单
+        setTimeout(() => {
+          this.handleStart({ chat: { id: chatId } });
+        }, 2000);
+        
+      } else if (action === 'verify') {
+        // 验证密码
+        if (text === this.config.guardian.password) {
+          // 密码正确，关闭守护模式
+          this.guardianMode = false;
+          this.config.guardian.enabled = false;
+          this.saveConfig();
+          
+          const successText = this.lang === 'zh' ? `
+✅ *密码验证成功！*
+
+守护者模式已关闭
+
+⚠️ 注意：
+• 现在可以访问所有功能
+• 不再自动拦截风险操作
+• 建议完成操作后重新开启
+
+💡 随时可以点击"守护模式"按钮重新开启
+          `.trim() : `
+✅ *Password verified!*
+
+Guardian mode disabled
+
+⚠️ Note:
+• All features are now accessible
+• No auto-blocking of risky operations
+• Recommended to re-enable after use
+
+💡 You can re-enable anytime by clicking "Guardian Mode" button
+          `.trim();
+          
+          this.bot.sendMessage(chatId, successText, { parse_mode: 'Markdown' });
+          
+          // 刷新主菜单
+          setTimeout(() => {
+            this.handleStart({ chat: { id: chatId } });
+          }, 2000);
+          
+        } else {
+          // 密码错误
+          const errorText = this.lang === 'zh' ? `
+❌ *密码错误！*
+
+守护者模式保持开启状态
+
+💡 如果忘记密码，请联系管理员
+          `.trim() : `
+❌ *Wrong password!*
+
+Guardian mode remains enabled
+
+💡 If you forgot password, please contact admin
+          `.trim();
+          
+          this.bot.sendMessage(chatId, errorText, { parse_mode: 'Markdown' });
+          
+          // 刷新主菜单
+          setTimeout(() => {
+            this.handleStart({ chat: { id: chatId } });
+          }, 2000);
+        }
+      }
+      
+      return;
+    }
+    
     // Handle add pair
     if (this.state.waitingForPair?.action === 'add' && this.state.waitingForPair.chatId === chatId) {
       if (text === '/cancel') {
@@ -2484,6 +2707,13 @@ Or click /help to see all features.
       `.trim();
       
       this.bot.sendMessage(chatId, helpText, { parse_mode: 'Markdown' });
+    }
+  }
+  
+  // Save config to file
+  saveConfig() {
+    if (this.onConfigChange) {
+      this.onConfigChange(this.config);
     }
   }
 }
