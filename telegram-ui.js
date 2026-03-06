@@ -1348,6 +1348,10 @@ Click buttons below to select a topic 👇
       this.handleSpecificTrades(chatId, messageId, query.id, pair);
     } else if (data === 'price_alerts') {
       // Price alerts menu
+      // Clear any waiting state
+      if (this.waitingForAlert) {
+        delete this.waitingForAlert;
+      }
       this.handlePriceAlerts(chatId, messageId, query.id);
     } else if (data === 'add_alert') {
       // Add new alert
@@ -4130,7 +4134,19 @@ Send /cancel to cancel
     // Update waiting state
     this.waitingForAlert = { type, pair, currentPrice, chatId };
     
-    this.bot.sendMessage(chatId, text, { parse_mode: 'Markdown' });
+    // Add inline keyboard with cancel button
+    const keyboard = {
+      inline_keyboard: [
+        [
+          { text: this.lang === 'zh' ? '❌ 取消' : '❌ Cancel', callback_data: 'price_alerts' }
+        ]
+      ]
+    };
+    
+    this.bot.sendMessage(chatId, text, { 
+      parse_mode: 'Markdown',
+      reply_markup: keyboard
+    });
   }
   
   // Handle remove alert
