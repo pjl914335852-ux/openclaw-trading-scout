@@ -4,7 +4,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![OpenClaw](https://img.shields.io/badge/OpenClaw-Powered-blue.svg)](https://openclaw.ai)
-[![Version](https://img.shields.io/badge/version-2.6.0-brightgreen.svg)](https://github.com/pjl914335852-ux/binance-guardian-ai/releases)
+[![Version](https://img.shields.io/badge/version-2.7.0-brightgreen.svg)](https://github.com/pjl914335852-ux/binance-guardian-ai/releases)
 [![Binance](https://img.shields.io/badge/Binance-Ecosystem-F0B90B.svg)](https://www.binance.com)
 [![Security](https://img.shields.io/badge/API-Read--Only-green.svg)](https://github.com/pjl914335852-ux/binance-guardian-ai#security)
 
