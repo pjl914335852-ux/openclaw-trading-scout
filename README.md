@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
 [![OpenClaw](https://img.shields.io/badge/OpenClaw-Powered-blue.svg)](https://openclaw.ai)
-[![Version](https://img.shields.io/badge/version-2.3.0-brightgreen.svg)](https://github.com/pjl914335852-ux/openclaw-trading-scout/releases)
+[![Version](https://img.shields.io/badge/version-2.4.0-brightgreen.svg)](https://github.com/pjl914335852-ux/openclaw-trading-scout/releases)
 
 [中文文档](./README.zh-CN.md) | [AI Enhanced Version](./README-AI.md) | [Pro Version](./README-PRO.md) | [Changelog](./CHANGELOG.md)
 

@@ -1,5 +1,58 @@
 # Changelog
 
+## [2.4.0] - 2026-03-06
+
+### 🔥 AI500 Ranking & Auto-Push
+
+#### Added
+- **AI500 Ranking:** View hot coins with high potential
+  - Added "🔥 AI500排行" button in pairs page
+  - Display TOP 10 high-score coins from NOFX
+  - Show AI500 score, price, 24h change percentage
+  - Refresh button to update data in real-time
+  - Sorted by AI500 score (highest first)
+  - Medal indicators: 🥇🥈🥉 for top 3
+  - Score emoji: 🔥 (≥80), ⚡ (≥60), 💫 (<60)
+
+- **AI500 Auto-Push:** Get notified of hot coins automatically
+  - Check AI500 hot coins every hour
+  - Push notification when AI500 score ≥ 80
+  - Only push new high-score coins (avoid duplicates)
+  - Auto-cleanup coins that drop below threshold
+  - Requires autoPush enabled
+  - Shows coin symbol, AI500 score, price, 24h change
+
+#### Changed
+- **Pairs Page UI:** Reorganized to 5 rows
+  - Row 1: Add Pair, Remove Pair
+  - Row 2: Set Interval, Set Threshold
+  - Row 3: Toggle Push, Market Overview
+  - Row 4: AI500 Ranking (NEW!), Test Alert
+  - Row 5: History, Back to Menu
+
+#### Technical
+- Added `handleAI500Ranking()` function in telegram-ui.js
+- Added `checkAI500HotCoins()` function in crypto-scout.js
+- Added `state.lastAI500Check` timestamp
+- Added `state.ai500HighScoreCoins` Set for tracking
+- Uses NOFX API `getAI500List()` endpoint
+- Check interval: 1 hour (3600000ms)
+- Push threshold: AI500 score ≥ 80
+- Callback handler: `ai500_ranking`
+
+#### Fixed
+- Fixed nofxApi variable name (should be nofxAPI)
+- Fixed API method name (getAI500List instead of getHighPotentialCoins)
+
+#### Benefits
+- Discover hot coins with high potential
+- Get notified of new opportunities automatically
+- Track AI500 rankings anytime
+- NOFX professional data integration
+- No need to check website manually
+
+---
+
 ## [2.3.0] - 2026-03-06
 
 ### 🚀 Language Sync & System Monitor
