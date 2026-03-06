@@ -10,11 +10,20 @@
     "test": "node test.js",
     "demo": "node demo-crypto-ai.js"
   },
-  "keywords": ["openclaw", "crypto", "trading", "arbitrage", "agent", "ai"],
+  "keywords": [
+    "openclaw",
+    "crypto",
+    "trading",
+    "arbitrage",
+    "agent",
+    "ai"
+  ],
   "author": "发财猫",
   "license": "MIT",
   "dependencies": {
     "axios": "^1.6.0",
+    "chart.js": "^4.5.1",
+    "chartjs-node-canvas": "^5.0.0",
     "node-telegram-bot-api": "^0.64.0"
   }
 }

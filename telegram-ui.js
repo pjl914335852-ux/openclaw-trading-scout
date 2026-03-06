@@ -1311,6 +1311,27 @@ Click buttons below to select a topic 👇
       // Specific coin deposit address
       const coin = data.replace('deposit_addr_', '');
       this.handleSpecificDepositAddress(chatId, messageId, query.id, coin);
+    } else if (data === 'kline_chart') {
+      // K-line chart
+      this.handleKlineChart(chatId, messageId, query.id);
+    } else if (data.startsWith('kline_')) {
+      // Specific pair K-line
+      const pair = data.replace('kline_', '');
+      this.handleSpecificKline(chatId, messageId, query.id, pair);
+    } else if (data === 'market_depth') {
+      // Market depth
+      this.handleMarketDepth(chatId, messageId, query.id);
+    } else if (data.startsWith('depth_')) {
+      // Specific pair depth
+      const pair = data.replace('depth_', '');
+      this.handleSpecificDepth(chatId, messageId, query.id, pair);
+    } else if (data === 'recent_trades') {
+      // Recent trades
+      this.handleRecentTrades(chatId, messageId, query.id);
+    } else if (data.startsWith('trades_')) {
+      // Specific pair trades
+      const pair = data.replace('trades_', '');
+      this.handleSpecificTrades(chatId, messageId, query.id, pair);
     }
   }
   
@@ -1622,8 +1643,15 @@ Send /cancel to cancel
       const keyboard = {
         inline_keyboard: [
           [
-            { text: this.lang === 'zh' ? '🔄 刷新' : '🔄 Refresh', callback_data: 'market_overview' },
-            { text: this.lang === 'zh' ? '🔙 返回' : '🔙 Back', callback_data: 'pairs' }
+            { text: this.lang === 'zh' ? '📈 K线图' : '📈 K-Line', callback_data: 'kline_chart' },
+            { text: this.lang === 'zh' ? '📊 深度数据' : '📊 Depth', callback_data: 'market_depth' }
+          ],
+          [
+            { text: this.lang === 'zh' ? '💹 最新成交' : '💹 Recent Trades', callback_data: 'recent_trades' },
+            { text: this.lang === 'zh' ? '🔄 刷新' : '🔄 Refresh', callback_data: 'market_overview' }
+          ],
+          [
+            { text: this.lang === 'zh' ? '🔙 返回' : '🔙 Back', callback_data: 'start' }
           ]
         ]
       };
@@ -3292,6 +3320,417 @@ Popular coins:
         ]]
       }
     });
+  }
+  
+  // Handle K-line chart menu
+  handleKlineChart(chatId, messageId, queryId) {
+    this.bot.answerCallbackQuery(queryId);
+    this.bot.deleteMessage(chatId, messageId).catch(() => {});
+    
+    const text = this.lang === 'zh' ? `
+📈 *K线图*
+
+选择要查看K线图的交易对：
+
+💡 提示：
+• K线图显示价格走势
+• 默认显示最近24小时
+• 包含开盘、收盘、最高、最低价
+
+常用交易对：
+    `.trim() : `
+📈 *K-Line Chart*
+
+Select pair to view K-line chart:
+
+💡 Tips:
+• K-line shows price trends
+• Default: last 24 hours
+• Includes open, close, high, low prices
+
+Popular pairs:
+    `.trim();
+    
+    const keyboard = {
+      inline_keyboard: [
+        [
+          { text: 'BTCUSDT', callback_data: 'kline_BTCUSDT' },
+          { text: 'ETHUSDT', callback_data: 'kline_ETHUSDT' }
+        ],
+        [
+          { text: 'BNBUSDT', callback_data: 'kline_BNBUSDT' },
+          { text: 'SOLUSDT', callback_data: 'kline_SOLUSDT' }
+        ],
+        [
+          { text: this.lang === 'zh' ? '🔙 返回' : '🔙 Back', callback_data: 'market_overview' }
+        ]
+      ]
+    };
+    
+    this.bot.sendMessage(chatId, text, {
+      parse_mode: 'Markdown',
+      reply_markup: keyboard
+    });
+  }
+  
+  // Handle specific pair K-line
+  async handleSpecificKline(chatId, messageId, queryId, pair) {
+    this.bot.answerCallbackQuery(queryId, { text: this.lang === 'zh' ? `📈 生成 ${pair} K线图...` : `📈 Generating ${pair} chart...`, show_alert: false });
+    this.bot.deleteMessage(chatId, messageId).catch(() => {});
+    
+    try {
+      const axios = require('axios');
+      const { ChartJSNodeCanvas } = require('chartjs-node-canvas');
+      const fs = require('fs');
+      const path = require('path');
+      
+      // Get kline data from Binance
+      const response = await axios.get('https://api.binance.com/api/v3/klines', {
+        params: {
+          symbol: pair,
+          interval: '1h',
+          limit: 24
+        }
+      });
+      
+      const klines = response.data;
+      
+      // Prepare chart data
+      const labels = klines.map(k => {
+        const date = new Date(k[0]);
+        return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+      });
+      
+      const prices = klines.map(k => ({
+        x: k[0],
+        o: parseFloat(k[1]), // open
+        h: parseFloat(k[2]), // high
+        l: parseFloat(k[3]), // low
+        c: parseFloat(k[4])  // close
+      }));
+      
+      // Create chart
+      const width = 800;
+      const height = 400;
+      const chartCallback = (ChartJS) => {
+        ChartJS.defaults.color = '#666';
+        ChartJS.defaults.font.size = 12;
+      };
+      
+      const chartJSNodeCanvas = new ChartJSNodeCanvas({ 
+        width, 
+        height, 
+        chartCallback,
+        backgroundColour: 'white'
+      });
+      
+      const configuration = {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: pair,
+            data: prices.map(p => p.c),
+            borderColor: 'rgb(75, 192, 192)',
+            backgroundColor: 'rgba(75, 192, 192, 0.1)',
+            tension: 0.1,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            title: {
+              display: true,
+              text: `${pair} - ${this.lang === 'zh' ? '24小时K线图' : '24H K-Line Chart'}`,
+              font: { size: 16 }
+            },
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: false,
+              ticks: {
+                callback: function(value) {
+                  return '$' + value.toLocaleString();
+                }
+              }
+            }
+          }
+        }
+      };
+      
+      const imageBuffer = await chartJSNodeCanvas.renderToBuffer(configuration);
+      
+      // Save to temp file
+      const tempFile = path.join('/tmp', `kline_${pair}_${Date.now()}.png`);
+      fs.writeFileSync(tempFile, imageBuffer);
+      
+      // Send chart
+      await this.bot.sendPhoto(chatId, tempFile, {
+        caption: this.lang === 'zh' ? 
+          `📈 ${pair} K线图\n\n⏰ 时间范围: 最近24小时\n📊 间隔: 1小时` :
+          `📈 ${pair} K-Line Chart\n\n⏰ Time Range: Last 24 hours\n📊 Interval: 1 hour`,
+        reply_markup: {
+          inline_keyboard: [[
+            { text: this.lang === 'zh' ? '🔙 返回' : '🔙 Back', callback_data: 'kline_chart' }
+          ]]
+        }
+      });
+      
+      // Clean up temp file
+      fs.unlinkSync(tempFile);
+      
+    } catch (error) {
+      console.error('Error generating K-line chart:', error);
+      const errorText = this.lang === 'zh' ? 
+        `❌ 生成K线图失败\n\n${error.message}` :
+        `❌ Failed to generate chart\n\n${error.message}`;
+      
+      this.bot.sendMessage(chatId, errorText, {
+        reply_markup: {
+          inline_keyboard: [[
+            { text: this.lang === 'zh' ? '🔙 返回' : '🔙 Back', callback_data: 'kline_chart' }
+          ]]
+        }
+      });
+    }
+  }
+  
+  // Handle market depth menu
+  handleMarketDepth(chatId, messageId, queryId) {
+    this.bot.answerCallbackQuery(queryId);
+    this.bot.deleteMessage(chatId, messageId).catch(() => {});
+    
+    const text = this.lang === 'zh' ? `
+📊 *市场深度*
+
+选择要查看深度数据的交易对：
+
+💡 提示：
+• 深度数据显示买卖盘口
+• 包含买单和卖单价格
+• 显示挂单数量
+
+常用交易对：
+    `.trim() : `
+📊 *Market Depth*
+
+Select pair to view depth data:
+
+💡 Tips:
+• Depth shows order book
+• Includes bid and ask prices
+• Shows order quantities
+
+Popular pairs:
+    `.trim();
+    
+    const keyboard = {
+      inline_keyboard: [
+        [
+          { text: 'BTCUSDT', callback_data: 'depth_BTCUSDT' },
+          { text: 'ETHUSDT', callback_data: 'depth_ETHUSDT' }
+        ],
+        [
+          { text: 'BNBUSDT', callback_data: 'depth_BNBUSDT' },
+          { text: 'SOLUSDT', callback_data: 'depth_SOLUSDT' }
+        ],
+        [
+          { text: this.lang === 'zh' ? '🔙 返回' : '🔙 Back', callback_data: 'market_overview' }
+        ]
+      ]
+    };
+    
+    this.bot.sendMessage(chatId, text, {
+      parse_mode: 'Markdown',
+      reply_markup: keyboard
+    });
+  }
+  
+  // Handle specific pair depth
+  async handleSpecificDepth(chatId, messageId, queryId, pair) {
+    this.bot.answerCallbackQuery(queryId, { text: this.lang === 'zh' ? `📊 获取 ${pair} 深度数据...` : `📊 Fetching ${pair} depth...`, show_alert: false });
+    this.bot.deleteMessage(chatId, messageId).catch(() => {});
+    
+    try {
+      const axios = require('axios');
+      
+      const response = await axios.get('https://api.binance.com/api/v3/depth', {
+        params: {
+          symbol: pair,
+          limit: 10
+        }
+      });
+      
+      const depth = response.data;
+      
+      let text = this.lang === 'zh' ? 
+        `📊 *${pair} 市场深度*\n\n` :
+        `📊 *${pair} Market Depth*\n\n`;
+      
+      // Asks (卖单)
+      text += this.lang === 'zh' ? '*🔴 卖单 (Ask):*\n' : '*🔴 Asks (Sell):*\n';
+      depth.asks.slice(0, 5).reverse().forEach((ask, index) => {
+        const price = parseFloat(ask[0]);
+        const qty = parseFloat(ask[1]);
+        text += `${5 - index}. $${price.toLocaleString()} × ${qty.toFixed(4)}\n`;
+      });
+      
+      text += '\n━━━━━━━━━━━━━━━━\n\n';
+      
+      // Bids (买单)
+      text += this.lang === 'zh' ? '*🟢 买单 (Bid):*\n' : '*🟢 Bids (Buy):*\n';
+      depth.bids.slice(0, 5).forEach((bid, index) => {
+        const price = parseFloat(bid[0]);
+        const qty = parseFloat(bid[1]);
+        text += `${index + 1}. $${price.toLocaleString()} × ${qty.toFixed(4)}\n`;
+      });
+      
+      const spread = parseFloat(depth.asks[0][0]) - parseFloat(depth.bids[0][0]);
+      const spreadPercent = (spread / parseFloat(depth.bids[0][0]) * 100).toFixed(4);
+      
+      text += `\n💡 ${this.lang === 'zh' ? '买卖价差' : 'Spread'}: $${spread.toFixed(2)} (${spreadPercent}%)`;
+      
+      this.bot.sendMessage(chatId, text, {
+        parse_mode: 'Markdown',
+        reply_markup: {
+          inline_keyboard: [[
+            { text: this.lang === 'zh' ? '🔄 刷新' : '🔄 Refresh', callback_data: `depth_${pair}` },
+            { text: this.lang === 'zh' ? '🔙 返回' : '🔙 Back', callback_data: 'market_depth' }
+          ]]
+        }
+      });
+      
+    } catch (error) {
+      console.error('Error fetching market depth:', error);
+      const errorText = this.lang === 'zh' ? 
+        `❌ 获取深度数据失败\n\n${error.message}` :
+        `❌ Failed to fetch depth\n\n${error.message}`;
+      
+      this.bot.sendMessage(chatId, errorText, {
+        reply_markup: {
+          inline_keyboard: [[
+            { text: this.lang === 'zh' ? '🔙 返回' : '🔙 Back', callback_data: 'market_depth' }
+          ]]
+        }
+      });
+    }
+  }
+  
+  // Handle recent trades menu
+  handleRecentTrades(chatId, messageId, queryId) {
+    this.bot.answerCallbackQuery(queryId);
+    this.bot.deleteMessage(chatId, messageId).catch(() => {});
+    
+    const text = this.lang === 'zh' ? `
+💹 *最新成交*
+
+选择要查看最新成交的交易对：
+
+💡 提示：
+• 显示最近的成交记录
+• 包含价格、数量、时间
+• 买卖方向标识
+
+常用交易对：
+    `.trim() : `
+💹 *Recent Trades*
+
+Select pair to view recent trades:
+
+💡 Tips:
+• Shows latest trade records
+• Includes price, quantity, time
+• Buy/sell direction indicators
+
+Popular pairs:
+    `.trim();
+    
+    const keyboard = {
+      inline_keyboard: [
+        [
+          { text: 'BTCUSDT', callback_data: 'trades_BTCUSDT' },
+          { text: 'ETHUSDT', callback_data: 'trades_ETHUSDT' }
+        ],
+        [
+          { text: 'BNBUSDT', callback_data: 'trades_BNBUSDT' },
+          { text: 'SOLUSDT', callback_data: 'trades_SOLUSDT' }
+        ],
+        [
+          { text: this.lang === 'zh' ? '🔙 返回' : '🔙 Back', callback_data: 'market_overview' }
+        ]
+      ]
+    };
+    
+    this.bot.sendMessage(chatId, text, {
+      parse_mode: 'Markdown',
+      reply_markup: keyboard
+    });
+  }
+  
+  // Handle specific pair recent trades
+  async handleSpecificTrades(chatId, messageId, queryId, pair) {
+    this.bot.answerCallbackQuery(queryId, { text: this.lang === 'zh' ? `💹 获取 ${pair} 最新成交...` : `💹 Fetching ${pair} trades...`, show_alert: false });
+    this.bot.deleteMessage(chatId, messageId).catch(() => {});
+    
+    try {
+      const axios = require('axios');
+      
+      const response = await axios.get('https://api.binance.com/api/v3/trades', {
+        params: {
+          symbol: pair,
+          limit: 20
+        }
+      });
+      
+      const trades = response.data;
+      
+      let text = this.lang === 'zh' ? 
+        `💹 *${pair} 最新成交*\n\n` :
+        `💹 *${pair} Recent Trades*\n\n`;
+      
+      trades.slice(0, 15).forEach((trade, index) => {
+        const price = parseFloat(trade.price);
+        const qty = parseFloat(trade.qty);
+        const time = new Date(trade.time).toLocaleTimeString('zh-CN', { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          second: '2-digit'
+        });
+        const side = trade.isBuyerMaker ? '🔴' : '🟢';
+        
+        text += `${side} $${price.toLocaleString()} × ${qty.toFixed(4)} (${time})\n`;
+      });
+      
+      text += `\n💡 ${this.lang === 'zh' ? '🟢 = 买入主导, 🔴 = 卖出主导' : '🟢 = Buy, 🔴 = Sell'}`;
+      
+      this.bot.sendMessage(chatId, text, {
+        parse_mode: 'Markdown',
+        reply_markup: {
+          inline_keyboard: [[
+            { text: this.lang === 'zh' ? '🔄 刷新' : '🔄 Refresh', callback_data: `trades_${pair}` },
+            { text: this.lang === 'zh' ? '🔙 返回' : '🔙 Back', callback_data: 'recent_trades' }
+          ]]
+        }
+      });
+      
+    } catch (error) {
+      console.error('Error fetching recent trades:', error);
+      const errorText = this.lang === 'zh' ? 
+        `❌ 获取最新成交失败\n\n${error.message}` :
+        `❌ Failed to fetch trades\n\n${error.message}`;
+      
+      this.bot.sendMessage(chatId, errorText, {
+        reply_markup: {
+          inline_keyboard: [[
+            { text: this.lang === 'zh' ? '🔙 返回' : '🔙 Back', callback_data: 'recent_trades' }
+          ]]
+        }
+      });
+    }
   }
   
   // Save config to file
