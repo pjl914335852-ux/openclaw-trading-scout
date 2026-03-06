@@ -1260,6 +1260,24 @@ ${testOpportunity.pair2}: ${testOpportunity.change2}%
     this.bot.deleteMessage(chatId, messageId).catch(() => {});
     
     try {
+      // Check if NOFX API key is configured
+      if (!this.config.nofx || !this.config.nofx.apiKey) {
+        const errorText = this.lang === 'zh' ? 
+          '❌ NOFX API 未配置\n\n请在 config.json 中添加 nofx.apiKey' :
+          '❌ NOFX API not configured\n\nPlease add nofx.apiKey in config.json';
+        
+        const keyboard = {
+          inline_keyboard: [
+            [
+              { text: this.lang === 'zh' ? '🔙 返回' : '🔙 Back', callback_data: 'pairs' }
+            ]
+          ]
+        };
+        
+        this.bot.sendMessage(chatId, errorText, { reply_markup: keyboard });
+        return;
+      }
+      
       // Get high potential coins from NOFX
       const nofxApi = require('./nofx-api');
       const api = new nofxApi(this.config.nofx.apiKey);
