@@ -470,13 +470,13 @@ async function checkAI500HotCoins() {
       return;
     }
     
-    // Find new high-score coins (AI500 >= 80)
+    // Find new high-score coins (score >= 80)
     const newHighScoreCoins = [];
     
     for (const coin of highPotentialCoins) {
-      if (coin.ai500Score >= 80 && !state.ai500HighScoreCoins.has(coin.symbol)) {
+      if (coin.score >= 80 && !state.ai500HighScoreCoins.has(coin.pair)) {
         newHighScoreCoins.push(coin);
-        state.ai500HighScoreCoins.add(coin.symbol);
+        state.ai500HighScoreCoins.add(coin.pair);
       }
     }
     
@@ -486,39 +486,45 @@ async function checkAI500HotCoins() {
         const message = lang === 'zh' ? `
 🔥 *AI500 热点币发现！*
 
-*币种:* ${coin.symbol}
-*AI500 分数:* ${coin.ai500Score.toFixed(1)} 🔥
+*币种:* ${coin.pair}
+*AI500 分数:* ${coin.score.toFixed(1)} 🔥
 
-*当前价格:* $${coin.price?.toFixed(4) || 'N/A'}
-${coin.change24h !== undefined ? `*24h 涨跌:* ${coin.change24h > 0 ? '📈 +' : '📉 '}${coin.change24h.toFixed(2)}%` : ''}
+*起始价格:* $${coin.start_price?.toFixed(6) || 'N/A'}
+*最高价格:* $${coin.max_price?.toFixed(6) || 'N/A'}
+${coin.increase_percent !== undefined ? `*涨幅:* 📈 +${coin.increase_percent.toFixed(2)}%` : ''}
 
 💡 *说明:* AI500 分数 ≥ 80 表示该币种具有很高的潜力
+
+📊 *数据来源:* NOFX 社区
 
 ⏰ ${new Date().toLocaleString('zh-CN')}
         `.trim() : `
 🔥 *AI500 Hot Coin Discovered!*
 
-*Symbol:* ${coin.symbol}
-*AI500 Score:* ${coin.ai500Score.toFixed(1)} 🔥
+*Pair:* ${coin.pair}
+*AI500 Score:* ${coin.score.toFixed(1)} 🔥
 
-*Current Price:* $${coin.price?.toFixed(4) || 'N/A'}
-${coin.change24h !== undefined ? `*24h Change:* ${coin.change24h > 0 ? '📈 +' : '📉 '}${coin.change24h.toFixed(2)}%` : ''}
+*Start Price:* $${coin.start_price?.toFixed(6) || 'N/A'}
+*Max Price:* $${coin.max_price?.toFixed(6) || 'N/A'}
+${coin.increase_percent !== undefined ? `*Increase:* 📈 +${coin.increase_percent.toFixed(2)}%` : ''}
 
 💡 *Note:* AI500 score ≥ 80 indicates high potential
+
+📊 *Data source:* NOFX Community
 
 ⏰ ${new Date().toLocaleString('en-US')}
         `.trim();
         
         await bot.sendMessage(config.telegram.chatId, message, { parse_mode: 'Markdown' });
-        console.log(`🔥 AI500 热点币推送: ${coin.symbol} (${coin.ai500Score.toFixed(1)})`);
+        console.log(`🔥 AI500 热点币推送: ${coin.pair} (${coin.score.toFixed(1)})`);
       }
     }
     
     // Clean up old coins (keep only current high-score coins)
     const currentHighScoreSymbols = new Set(
       highPotentialCoins
-        .filter(c => c.ai500Score >= 80)
-        .map(c => c.symbol)
+        .filter(c => c.score >= 80)
+        .map(c => c.pair)
     );
     
     // Remove coins that are no longer high-score

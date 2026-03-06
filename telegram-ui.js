@@ -190,7 +190,7 @@ I'm already running in the background! I'll notify you immediately when arbitrag
           { text: this.lang === 'zh' ? '💼 币安账户' : '💼 Binance Account', callback_data: 'binance_account' }
         ],
         [
-          { text: this.lang === 'zh' ? '🌐 语言切换' : '🌐 Language', callback_data: 'language_switch' },
+          { text: this.lang === 'zh' ? '🇬🇧 English' : '🇨🇳 中文', callback_data: this.lang === 'zh' ? 'lang_en' : 'lang_zh' },
           { text: this.lang === 'zh' ? '❓ 帮助' : '❓ Help', callback_data: 'help' }
         ]
       ]
@@ -804,9 +804,6 @@ We are an intelligent assistant focused on cryptocurrency arbitrage monitoring, 
     } else if (data === 'binance_account') {
       // Binance account menu
       this.handleBinanceAccount(chatId, messageId, query.id);
-    } else if (data === 'language_switch') {
-      // Language switch menu
-      this.handleLanguageSwitch(chatId, messageId, query.id);
     } else if (data.startsWith('spot_holdings')) {
       // Spot holdings with pagination
       const page = parseInt(data.split('_')[2]) || 0;
@@ -1319,40 +1316,48 @@ ${testOpportunity.pair2}: ${testOpportunity.change2}%
       
       // Sort by AI500 score
       const sortedCoins = highPotentialCoins
-        .sort((a, b) => b.ai500Score - a.ai500Score)
+        .sort((a, b) => b.score - a.score)
         .slice(0, 10); // Top 10
       
       let rankingText = this.lang === 'zh' ? `
 🔥 *AI500 热点币排行榜*
 
-_NOFX AI500 高分币种 TOP 10_
+_NOFX AI500 高分币种 TOP ${sortedCoins.length}_
 
 ` : `
 🔥 *AI500 Hot Coins Ranking*
 
-_NOFX AI500 Top 10 High-Score Coins_
+_NOFX AI500 Top ${sortedCoins.length} High-Score Coins_
 
 `;
       
       sortedCoins.forEach((coin, index) => {
         const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
-        const scoreEmoji = coin.ai500Score >= 80 ? '🔥' : coin.ai500Score >= 60 ? '⚡' : '💫';
+        const scoreEmoji = coin.score >= 80 ? '🔥' : coin.score >= 60 ? '⚡' : '💫';
         
-        rankingText += `${medal} *${coin.symbol}* ${scoreEmoji}\n`;
-        rankingText += `   AI500: ${coin.ai500Score.toFixed(1)} | `;
-        rankingText += `价格: $${coin.price?.toFixed(4) || 'N/A'}\n`;
+        rankingText += `${medal} *${coin.pair}* ${scoreEmoji}\n`;
+        rankingText += `   AI500: ${coin.score.toFixed(1)}`;
         
-        if (coin.change24h !== undefined) {
-          const changeEmoji = coin.change24h > 0 ? '📈' : coin.change24h < 0 ? '📉' : '➡️';
-          rankingText += `   24h: ${changeEmoji} ${coin.change24h > 0 ? '+' : ''}${coin.change24h.toFixed(2)}%\n`;
+        if (coin.increase_percent !== undefined) {
+          const changeEmoji = coin.increase_percent > 0 ? '📈' : '➡️';
+          rankingText += ` | ${changeEmoji} +${coin.increase_percent.toFixed(2)}%`;
         }
         
         rankingText += '\n';
+        
+        if (coin.start_price) {
+          rankingText += `   ${this.lang === 'zh' ? '起始价' : 'Start'}: $${coin.start_price.toFixed(6)}`;
+        }
+        if (coin.max_price) {
+          rankingText += ` | ${this.lang === 'zh' ? '最高价' : 'Max'}: $${coin.max_price.toFixed(6)}`;
+        }
+        
+        rankingText += '\n\n';
       });
       
       rankingText += this.lang === 'zh' ? 
-        '\n💡 AI500 分数越高，表示该币种潜力越大' :
-        '\n💡 Higher AI500 score indicates greater potential';
+        '\n💡 AI500 分数越高，表示该币种潜力越大\n📊 数据来源: NOFX 社区' :
+        '\n💡 Higher AI500 score indicates greater potential\n📊 Data source: NOFX Community';
       
       const keyboard = {
         inline_keyboard: [
@@ -1724,45 +1729,6 @@ Please select what you want to view:
         ],
         [
           { text: this.lang === 'zh' ? '💰 理财产品' : '💰 Earn Products', callback_data: 'earn_products' }
-        ],
-        [
-          { text: this.lang === 'zh' ? '🔙 返回主菜单' : '🔙 Back to Menu', callback_data: 'start' }
-        ]
-      ]
-    };
-    
-    this.bot.sendMessage(chatId, text, {
-      parse_mode: 'Markdown',
-      reply_markup: keyboard
-    });
-  }
-  
-  // Handle language switch menu
-  handleLanguageSwitch(chatId, messageId, queryId) {
-    this.bot.answerCallbackQuery(queryId);
-    this.bot.deleteMessage(chatId, messageId).catch(() => {});
-    
-    const text = this.lang === 'zh' ? `
-🌐 *语言切换*
-
-当前语言：🇨🇳 中文
-
-请选择你想使用的语言：
-    `.trim() : `
-🌐 *Language Switch*
-
-Current Language: 🇬🇧 English
-
-Please select your preferred language:
-    `.trim();
-    
-    const keyboard = {
-      inline_keyboard: [
-        [
-          { text: '🇬🇧 English', callback_data: 'lang_en' }
-        ],
-        [
-          { text: '🇨🇳 中文', callback_data: 'lang_zh' }
         ],
         [
           { text: this.lang === 'zh' ? '🔙 返回主菜单' : '🔙 Back to Menu', callback_data: 'start' }
