@@ -55,7 +55,9 @@
   "guardian": {
     "enabled": false,
     "password": "1234",
-    "passwordSet": true
+    "passwordSet": true,
+    "ownerChatId": "YOUR_TELEGRAM_ID",
+    "ownerChatIdNote": "填你自己的 Telegram ID，只有这个 ID 才能重置守护者密码。在 Telegram 搜索 @userinfobot 获取你的 ID"
   },
   "priceAlerts": [],
   "ai": {

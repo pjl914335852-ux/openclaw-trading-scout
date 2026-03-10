@@ -216,12 +216,6 @@ class TelegramUI {
   // /start - Welcome message
   handleStart(msg) {
     const chatId = msg.chat.id;
-
-    // 第一次 /start 自动记录主人 chatId
-    if (!this.config.guardian.ownerChatId) {
-      this.config.guardian.ownerChatId = chatId;
-      this.saveConfig();
-    }
     
     const welcomeText = this.lang === 'zh' ? `
 🛡️ *欢迎使用 Binance Guardian AI！*
