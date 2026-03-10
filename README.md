@@ -336,6 +336,22 @@ Auto-detect user intent:
 - Password protection to disable
 - Suitable for beginners and elderly
 
+#### 🔑 Forgot Guardian Password?
+
+Send `/resetguardian` to the bot. Only the user whose Telegram ID is set in `guardian.ownerChatId` can reset the password.
+
+**Already installed and need to set ownerChatId?**
+1. Get your Telegram ID: message [@userinfobot](https://t.me/userinfobot)
+2. Open `config.json`, add `"ownerChatId": YOUR_ID` inside the `guardian` section
+3. Restart the bot
+
+```json
+"guardian": {
+  "enabled": true,
+  "ownerChatId": 123456789
+}
+```
+
 ### Professional Mode ⚙️
 **Full Menu (9 rows, all features):**
 ```
@@ -537,7 +553,8 @@ Edit `config.json`:
   "guardian": {
     "enabled": true,
     "password": "",
-    "passwordSet": false
+    "passwordSet": false,
+    "ownerChatId": "YOUR_TELEGRAM_ID"
   },
   "trading": {
     "pairs": ["BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT"],
@@ -559,6 +576,7 @@ Edit `config.json`:
 | `cryptoex.apiSecret` | Binance API secret | - | Yes |
 | `openai.apiKey` | OpenAI API key | - | No |
 | `guardian.enabled` | Enable guardian mode | `true` | No |
+| `guardian.ownerChatId` | Your Telegram ID — only this user can reset guardian password. Get it from [@userinfobot](https://t.me/userinfobot) | - | Recommended |
 | `trading.threshold` | Arbitrage threshold (%) | `0.5` | No |
 | `trading.checkInterval` | Check interval (ms) | `30000` | No |
 

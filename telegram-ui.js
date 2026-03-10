@@ -1760,6 +1760,11 @@ Click buttons below to select a topic 👇
       // Remove alert
       const alertId = data.replace('remove_alert_', '');
       this.handleRemoveAlert(chatId, messageId, query.id, alertId);
+    } else if (data === 'emergency_help') {
+      // Return to emergency help menu
+      this.bot.answerCallbackQuery(query.id);
+      this.bot.deleteMessage(chatId, messageId).catch(() => {});
+      this.handleEmergencyHelp({ chat: { id: chatId } });
     } else if (data.startsWith('emergency_')) {
       // Emergency help types
       const type = data.replace('emergency_', '');
