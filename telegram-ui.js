@@ -135,7 +135,21 @@ class TelegramUI {
     this.bot.onText(/\/guardian/, (msg) => {
       this.handleGuardianMode(msg);
     });
-    
+
+    // /resetguardian - 重置守护者密码（忘记密码时使用）
+    this.bot.onText(/\/resetguardian/, (msg) => {
+      const chatId = msg.chat.id;
+      this.config.guardian.password = null;
+      this.config.guardian.passwordSet = false;
+      this.config.guardian.enabled = false;
+      this.saveConfig();
+      this.bot.sendMessage(chatId,
+        this.lang === 'zh'
+          ? '✅ 守护者密码已重置，守护者模式已关闭。\n\n下次开启守护者模式时需要重新设置密码。'
+          : '✅ Guardian password has been reset and guardian mode is now off.\n\nYou will need to set a new password next time you enable guardian mode.'
+      );
+    });
+
     // /check command - 检查币种安全性
     this.bot.onText(/\/check (.+)/, (msg, match) => {
       this.handleCheckCoin(msg, match[1]);
@@ -5454,7 +5468,7 @@ Click buttons below for more anti-scam knowledge
     // Telegram 消息长度限制 4096 字符，如果超过则分段发送
     if (fullMessage.length > 4000) {
       // 发送标题
-      this.bot.sendMessage(chatId, `*${guide.title}*`, { parse_mode: 'Markdown' });
+      this.bot.sendMessage(chatId, `*${guide.title}*`, {  });
       
       // 分段发送内容
       const content = guide.content;
@@ -5466,7 +5480,7 @@ Click buttons below for more anti-scam knowledge
         const isLast = (start + chunkSize >= content.length);
         
         this.bot.sendMessage(chatId, chunk, {
-          parse_mode: 'Markdown',
+          
           reply_markup: isLast ? keyboard : undefined
         }).catch(err => console.error('发送分段消息失败:', err));
         
@@ -5480,7 +5494,7 @@ Click buttons below for more anti-scam knowledge
     } else {
       // 消息不长，直接发送
       this.bot.sendMessage(chatId, fullMessage, {
-        parse_mode: 'Markdown',
+        
         reply_markup: keyboard
       }).catch(err => console.error('发送紧急求助消息失败:', err));
     }
