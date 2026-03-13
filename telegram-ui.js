@@ -136,6 +136,57 @@ class TelegramUI {
       this.handleGuardianMode(msg);
     });
 
+    // /adduser <id> - 添加白名单用户（仅 owner）
+    this.bot.onText(/\/adduser (.+)/, (msg, match) => {
+      const chatId = msg.chat.id;
+      const ownerChatId = this.config.guardian?.ownerChatId;
+      if (chatId !== ownerChatId) {
+        this.bot.sendMessage(chatId, '❌ 只有 Bot 主人才能管理白名单。');
+        return;
+      }
+      const targetId = parseInt(match[1].trim());
+      if (!this.config.guardian.whitelist) this.config.guardian.whitelist = [];
+      if (!this.config.guardian.whitelist.includes(targetId)) {
+        this.config.guardian.whitelist.push(targetId);
+        this.saveConfig();
+        this.bot.sendMessage(chatId, `✅ 已添加用户 ${targetId} 到白名单。`);
+      } else {
+        this.bot.sendMessage(chatId, `ℹ️ 用户 ${targetId} 已在白名单中。`);
+      }
+    });
+
+    // /removeuser <id> - 移除白名单用户（仅 owner）
+    this.bot.onText(/\/removeuser (.+)/, (msg, match) => {
+      const chatId = msg.chat.id;
+      const ownerChatId = this.config.guardian?.ownerChatId;
+      if (chatId !== ownerChatId) {
+        this.bot.sendMessage(chatId, '❌ 只有 Bot 主人才能管理白名单。');
+        return;
+      }
+      const targetId = parseInt(match[1].trim());
+      if (!this.config.guardian.whitelist) this.config.guardian.whitelist = [];
+      const idx = this.config.guardian.whitelist.indexOf(targetId);
+      if (idx > -1) {
+        this.config.guardian.whitelist.splice(idx, 1);
+        this.saveConfig();
+        this.bot.sendMessage(chatId, `✅ 已移除用户 ${targetId}。`);
+      } else {
+        this.bot.sendMessage(chatId, `ℹ️ 用户 ${targetId} 不在白名单中。`);
+      }
+    });
+
+    // /listusers - 查看白名单（仅 owner）
+    this.bot.onText(/\/listusers/, (msg) => {
+      const chatId = msg.chat.id;
+      const ownerChatId = this.config.guardian?.ownerChatId;
+      if (chatId !== ownerChatId) {
+        this.bot.sendMessage(chatId, '❌ 只有 Bot 主人才能查看白名单。');
+        return;
+      }
+      const whitelist = this.config.guardian?.whitelist || [];
+      this.bot.sendMessage(chatId, `👑 Owner: ${ownerChatId}\n📋 白名单: ${whitelist.length > 0 ? whitelist.join(', ') : '（空）'}`);
+    });
+
     // /resetguardian - 重置守护者密码（忘记密码时使用）
     this.bot.onText(/\/resetguardian/, (msg) => {
       const chatId = msg.chat.id;
@@ -216,7 +267,26 @@ class TelegramUI {
   // /start - Welcome message
   handleStart(msg) {
     const chatId = msg.chat.id;
-    
+
+    // 权限检查：第一个 /start 自动绑定为 owner，之后只有 owner 或白名单可用
+    const ownerChatId = this.config.guardian?.ownerChatId;
+    const whitelist = this.config.guardian?.whitelist || [];
+
+    if (!ownerChatId) {
+      // 第一个用户自动成为 owner
+      if (!this.config.guardian) this.config.guardian = {};
+      this.config.guardian.ownerChatId = chatId;
+      this.saveConfig();
+      console.log(`[注册] 用户 ${chatId} 已自动注册为 owner`);
+    } else if (chatId !== ownerChatId && !whitelist.includes(chatId)) {
+      this.bot.sendMessage(chatId,
+        this.lang === 'zh'
+          ? '❌ 你没有权限使用此机器人。'
+          : '❌ You do not have permission to use this bot.'
+      );
+      return;
+    }
+
     const welcomeText = this.lang === 'zh' ? `
 🛡️ *欢迎使用 Binance Guardian AI！*
 
