@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * 币安广场每日自动发帖（AI生成版）
- * 脚本自己调 AI 生成内容 + 隐私检查 + 自动发布
+ * 币安广场每日自动发帖（新闻 + AI生成版）
+ * 抓取最新加密新闻 → AI 结合用户风格生成内容 → 隐私检查 → 发布
  */
 
 const https = require('https');
@@ -18,28 +18,40 @@ const AI_CONFIG = {
 };
 
 if (!AI_CONFIG.apiKey) {
-  console.error('❌ 未配置 AI API Key，请在 config.json 的 ai.apiKey 填入你的 key');
+  console.error('❌ 未配置 AI API Key');
   process.exit(1);
 }
 
-const THEMES = [
-  '风险管理实战经验',
-  '市场心理与情绪控制',
-  '加密货币安全防骗',
-  '长期投资思维',
-  '新手常见错误',
-  'DeFi使用心得',
-  '仓位管理技巧',
-  '牛熊市应对策略',
-  '链上数据解读',
-  '项目研究方法'
-];
+// 抓取 CryptoPanic 最新新闻（免费，无需 key）
+function fetchNews() {
+  return new Promise((resolve) => {
+    const req = https.request({
+      hostname: 'cryptopanic.com',
+      path: '/api/free/v1/posts/?auth_token=free&public=true&currencies=BTC,ETH,BNB&filter=hot',
+      method: 'GET',
+      headers: { 'User-Agent': 'Mozilla/5.0' }
+    }, (res) => {
+      let data = '';
+      res.on('data', c => data += c);
+      res.on('end', () => {
+        try {
+          const json = JSON.parse(data);
+          const titles = (json.results || []).slice(0, 5).map(r => r.title);
+          resolve(titles);
+        } catch(e) { resolve([]); }
+      });
+    });
+    req.on('error', () => resolve([]));
+    req.setTimeout(8000, () => { req.destroy(); resolve([]); });
+    req.end();
+  });
+}
 
 function callAI(prompt) {
   return new Promise((resolve, reject) => {
     const body = JSON.stringify({
       model: AI_CONFIG.model,
-      max_tokens: 500,
+      max_tokens: 600,
       messages: [{ role: 'user', content: prompt }]
     });
 
@@ -71,20 +83,22 @@ function callAI(prompt) {
   });
 }
 
-async function generateContent(theme) {
-  const prompt = `你是一个有真实加密货币投资经验的普通用户，在币安广场分享心得。
+async function generateContent(newsTitles) {
+  const newsSection = newsTitles.length > 0
+    ? `今日加密市场热点新闻：\n${newsTitles.map((t, i) => `${i+1}. ${t}`).join('\n')}\n\n`
+    : '';
 
-今天的主题：${theme}
+  const prompt = `${newsSection}你是一个有3年真实加密货币投资经验的普通散户，在币安广场分享今日感悟。
 
-要求：
-- 用第一人称，像朋友聊天一样自然
-- 150-200字，不要太长
-- 必须有具体的真实案例或数字（可以匿名化）
+写作风格要求：
+- 第一人称，像朋友聊天，接地气，不装
+- 有自己的判断和观点，敢说"我觉得""我不看好"
+- 结合今日新闻或市场情绪，有时效性
+- 150-200字，有具体数字或案例（可匿名化）
 - 有一个核心观点，有反思或教训
-- 结尾加2-3个相关话题标签（#xxx格式）
-- 不要用"首先其次最后"这种格式
-- 不要提及任何平台名称、用户名、真实姓名
-- 不要包含任何链接或联系方式
+- 结尾加2-3个话题标签（#xxx格式）
+- 不要用"首先其次最后"格式
+- 不要提及任何平台名、用户名、真实姓名、链接、联系方式
 
 直接输出内容，不要加任何前缀说明。`;
 
@@ -92,25 +106,28 @@ async function generateContent(theme) {
 }
 
 async function main() {
-  const dayIndex = Math.floor(Date.now() / 86400000) % THEMES.length;
-  const theme = THEMES[dayIndex];
+  console.log('📰 抓取最新加密新闻...');
+  const newsTitles = await fetchNews();
+  if (newsTitles.length > 0) {
+    console.log(`✅ 获取到 ${newsTitles.length} 条新闻`);
+    newsTitles.forEach((t, i) => console.log(`  ${i+1}. ${t}`));
+  } else {
+    console.log('⚠️  新闻获取失败，使用纯 AI 生成');
+  }
 
-  console.log(`📅 今日主题：${theme}`);
-  console.log('🤖 AI 生成内容中...');
-
+  console.log('\n🤖 AI 生成内容中...');
   let content;
   try {
-    content = await generateContent(theme);
+    content = await generateContent(newsTitles);
     if (!content || content.length < 50) throw new Error('内容太短');
     console.log('✅ 内容生成完成\n');
-    console.log(content.slice(0, 80) + '...\n');
+    console.log(content + '\n');
   } catch(e) {
     console.error('❌ AI 生成失败:', e.message);
     process.exit(1);
   }
 
   const result = await safePost(content);
-
   if (result.success) {
     console.log(`✅ 发帖成功！`);
     console.log(`🔗 链接：${result.url}`);
