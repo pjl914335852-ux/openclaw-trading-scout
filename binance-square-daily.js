@@ -74,7 +74,7 @@ function callAI(prompt) {
   return new Promise((resolve, reject) => {
     const body = JSON.stringify({
       model: AI_CONFIG.model,
-      max_tokens: 600,
+      max_tokens: 800,  // 增加到 800，确保不会因为 token 限制被截断
       messages: [{ role: 'user', content: prompt }]
     });
 
@@ -96,7 +96,15 @@ function callAI(prompt) {
       res.on('end', () => {
         try {
           const json = JSON.parse(data);
-          resolve(json.choices?.[0]?.message?.content || '');
+          const content = json.choices?.[0]?.message?.content || '';
+          const finishReason = json.choices?.[0]?.finish_reason;
+          
+          // 记录 AI 返回状态
+          if (finishReason !== 'stop') {
+            console.log(`⚠️  AI 返回异常: finish_reason=${finishReason}`);
+          }
+          
+          resolve(content);
         } catch(e) { reject(e); }
       });
     });
@@ -107,16 +115,19 @@ function callAI(prompt) {
 }
 
 async function generateContent(marketData) {
-  const dataSection = marketData.hasData
-    ? `今日市场数据：\n${marketData.topGainers ? `涨幅榜：${marketData.topGainers}\n` : ''}${marketData.news?.length ? `最新快讯：\n${marketData.news.slice(0,3).join('\n')}\n` : ''}\n`
+  const newsSection = marketData.news?.length
+    ? `今日加密市场热点新闻：\n${marketData.news.slice(0, 5).map((t, i) => `${i+1}. ${t}`).join('\n')}\n\n`
+    : '';
+  const gainersSection = marketData.topGainers
+    ? `今日涨幅榜：${marketData.topGainers}\n\n`
     : '';
 
-  const prompt = `${dataSection}你是一个有3年真实加密货币投资经验的普通散户，在币安广场分享今日感悟。
+  const prompt = `${newsSection}${gainersSection}你是一个有3年真实加密货币投资经验的普通散户，在币安广场分享今日感悟。
 
 写作风格要求：
 - 第一人称，像朋友聊天，接地气，不装
 - 有自己的判断和观点，敢说"我觉得""我不看好"
-- 结合今日市场数据，有时效性
+- 结合今日新闻或市场情绪，有时效性
 - 150-200字，有具体数字或案例（可匿名化）
 - 有一个核心观点，有反思或教训
 - 结尾加2-3个话题标签（#xxx格式）
